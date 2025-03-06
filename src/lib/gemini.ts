@@ -16,9 +16,9 @@ export const generateTravelPlan = async (prompt: string): Promise<TravelPlanData
       return generateMockTravelPlanData();
     }
     
-    // Make the actual API call to Gemini 2.0 Pro
-    // Updated to use the correct endpoint for Gemini API
-    const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent', {
+    // Make the actual API call to Gemini 1.0 Pro
+    // Using the correct endpoint for Gemini API
+    const response = await fetch('https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
