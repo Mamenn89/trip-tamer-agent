@@ -5,6 +5,7 @@ import { TravelPlan as TravelPlanType, TravelPlanData } from '../types';
 import TravelCard from './TravelCard';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import FlightSuggestions from './FlightSuggestions';
 
 interface TravelPlanProps {
   plan: TravelPlanData;
@@ -55,6 +56,14 @@ const TravelPlan: React.FC<TravelPlanProps> = ({ plan, onStartOver }) => {
   
   const days = getDays();
   
+  // Parse the departure date from the first day's title if available
+  const getDepartureDate = () => {
+    if (plan.dailyItinerary && plan.dailyItinerary.length > 0) {
+      return plan.dailyItinerary[0].title;
+    }
+    return "flexible";
+  };
+  
   return (
     <div className="max-w-4xl mx-auto animate-reveal">
       <div className="bg-white rounded-xl shadow-subtle overflow-hidden mb-8">
@@ -102,6 +111,7 @@ const TravelPlan: React.FC<TravelPlanProps> = ({ plan, onStartOver }) => {
       <Tabs defaultValue="itinerary" className="mb-8">
         <TabsList className="w-full bg-white shadow-sm border border-gray-100 p-1">
           <TabsTrigger value="itinerary" className="flex-1">Itinerary</TabsTrigger>
+          <TabsTrigger value="flights" className="flex-1">Flights</TabsTrigger>
           <TabsTrigger value="overview" className="flex-1">Overview</TabsTrigger>
           <TabsTrigger value="tips" className="flex-1">Travel Tips</TabsTrigger>
         </TabsList>
@@ -159,6 +169,25 @@ const TravelPlan: React.FC<TravelPlanProps> = ({ plan, onStartOver }) => {
                 <TravelCard day={day.day} date={day.date} activities={day.activities} />
               </div>
             ))}
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="flights" className="pt-6">
+          <div className="bg-white rounded-xl shadow-subtle overflow-hidden">
+            <div className="bg-blue-50 px-6 py-4 border-b border-blue-100">
+              <div className="flex items-center space-x-2">
+                <Plane className="text-blue-600 w-5 h-5" />
+                <h3 className="font-medium text-gray-900">Flight Options</h3>
+              </div>
+            </div>
+            
+            <div className="p-6">
+              <FlightSuggestions
+                source={plan.flightSuggestions?.source || "Unknown"}
+                destination={plan.destination}
+                date={getDepartureDate()}
+              />
+            </div>
           </div>
         </TabsContent>
         

@@ -1,4 +1,3 @@
-
 export interface TravelFormData {
   source: string;
   destination: string;
@@ -44,7 +43,6 @@ export interface TravelPlan {
   };
 }
 
-// Adding the TravelPlanData type that was missing
 export interface TravelPlanData {
   destination: string;
   duration: string;
@@ -74,4 +72,9 @@ export interface TravelPlanData {
     description: string;
   }>;
   imagePrompt: string;
+  flightSuggestions?: {
+    source: string;
+    destination: string;
+    date: string;
+  };
 }

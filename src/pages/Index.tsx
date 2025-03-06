@@ -23,7 +23,22 @@ const Index = () => {
       setTravelPlan(null); // Reset any previous travel plan
       
       const plan = await generatePlan(formData);
-      setTravelPlan(plan);
+      
+      // Add flight suggestion data
+      const planWithFlights = {
+        ...plan,
+        flightSuggestions: {
+          source: formData.source,
+          destination: plan.destination,
+          date: formData.startDate ? new Date(formData.startDate).toLocaleDateString('en-US', { 
+            month: 'long', 
+            day: 'numeric', 
+            year: 'numeric' 
+          }) : 'flexible'
+        }
+      };
+      
+      setTravelPlan(planWithFlights);
       
       // Check if we got mock data due to an error
       if (typeof plan.overview === 'string' && plan.overview.includes('⚠️ NOTE: This is MOCK DATA')) {
