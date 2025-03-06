@@ -44,9 +44,34 @@ export interface TravelPlan {
   };
 }
 
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  savedTrips: TravelPlan[];
+// Adding the TravelPlanData type that was missing
+export interface TravelPlanData {
+  destination: string;
+  duration: string;
+  overview: string;
+  dailyItinerary: Array<{
+    day: number;
+    title: string;
+    activities: string[];
+    meals: string[];
+  }>;
+  budgetBreakdown: {
+    accommodation: number;
+    transportation: number;
+    food: number;
+    activities: number;
+    miscellaneous: number;
+    total: number;
+  };
+  travelTips: string[];
+  accommodations: Array<{
+    name: string;
+    description: string;
+    priceRange: string;
+  }>;
+  localCuisine: Array<{
+    name: string;
+    description: string;
+  }>;
+  imagePrompt: string;
 }

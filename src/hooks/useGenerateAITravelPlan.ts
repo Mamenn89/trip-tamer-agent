@@ -102,7 +102,7 @@ export const useGenerateAITravelPlan = () => {
         For the imagePrompt field, create a descriptive prompt that could be used to generate an image of a notable landmark or scenery from the destination.
       `;
 
-      // Call the Gemini API
+      // Call the Gemini API with the prompt string
       const result = await generateTravelPlan(prompt);
       
       // In case the API returns text that is not properly formatted JSON
@@ -114,7 +114,8 @@ export const useGenerateAITravelPlan = () => {
           const jsonStr = jsonMatch ? jsonMatch[1] : result;
           planData = JSON.parse(jsonStr);
         } else {
-          planData = result as TravelPlanData;
+          // If the result is already an object, use it
+          planData = result as unknown as TravelPlanData;
         }
         
         // Ensure all required fields exist

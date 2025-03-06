@@ -27,6 +27,11 @@ const Index = () => {
     }
   };
 
+  const handleStartOver = () => {
+    setTravelPlan(null);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
     <div className="relative min-h-screen">
       <AnimatedBackground />
@@ -58,7 +63,7 @@ const Index = () => {
 
         {travelPlan && !loading && (
           <div id="results" className="my-12 scroll-mt-24">
-            <TravelPlan plan={travelPlan} />
+            <TravelPlan plan={travelPlan} onStartOver={handleStartOver} />
           </div>
         )}
       </main>
