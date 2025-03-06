@@ -46,7 +46,15 @@ export const generateTravelPlan = async (prompt: string): Promise<TravelPlanData
       }
 
       const data = await response.json();
-      const generatedText = data.choices[0].message.content;
+      console.log('DeepSeek API response:', data);
+      
+      // Extract the content from the response
+      const generatedText = data.choices?.[0]?.message?.content;
+      
+      if (!generatedText) {
+        console.error('Unexpected API response format:', data);
+        return handleParsingError();
+      }
       
       try {
         const jsonMatch = generatedText.match(/```(?:json)?\s*([\s\S]*?)\s*```/);

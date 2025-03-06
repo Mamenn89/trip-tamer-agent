@@ -20,6 +20,8 @@ const Index = () => {
   const handleSubmit = async (formData: TravelFormData) => {
     try {
       setNetworkError(null);
+      setTravelPlan(null); // Reset any previous travel plan
+      
       const plan = await generatePlan(formData);
       setTravelPlan(plan);
       
@@ -34,6 +36,8 @@ const Index = () => {
       }, 100);
     } catch (err) {
       console.error('Error generating travel plan:', err);
+      // Ensure the loading state is reset in case of error
+      setNetworkError('Failed to generate travel plan. Please try again.');
     }
   };
 
