@@ -1,25 +1,72 @@
+import { TravelPlanData } from '../types';
 
-import { TravelFormData, TravelPlanData } from '../types';
+// This key should be replaced by user's own API key
+// In production, this should be stored in environment variables
+let GEMINI_API_KEY = "";
 
-// Using a simple approach first - in a real app, we'd want to use API keys properly stored in environment variables
-const API_KEY = "YOUR_GEMINI_API_KEY"; // This is just a placeholder, we'll prompt the user to enter their API key
+export const setApiKey = (key: string) => {
+  GEMINI_API_KEY = key;
+};
 
 export const generateTravelPlan = async (prompt: string): Promise<TravelPlanData> => {
   try {
     console.log('Generating travel plan with prompt:', prompt);
     
-    // For demo purposes, we'll simulate the API call with a 2-second delay
-    // In a real implementation, we would make the actual call to Gemini API
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        // In a full implementation, replace this with actual API call
-        const mockResponse = generateMockTravelPlanData();
-        resolve(mockResponse);
-      }, 2000);
+    if (!GEMINI_API_KEY) {
+      // For development/demo if no API key is provided
+      return generateMockTravelPlanData();
+    }
+    
+    // Make the actual API call to Gemini 2.0 Pro
+    const response = await fetch('https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-goog-api-key': GEMINI_API_KEY
+      },
+      body: JSON.stringify({
+        contents: [
+          {
+            parts: [
+              {
+                text: prompt
+              }
+            ]
+          }
+        ],
+        generationConfig: {
+          temperature: 0.7,
+          topK: 40,
+          topP: 0.95,
+          maxOutputTokens: 8192,
+        }
+      })
     });
+
+    if (!response.ok) {
+      throw new Error(`API request failed with status ${response.status}`);
+    }
+
+    const data = await response.json();
+    
+    // Extract the text from the response
+    const generatedText = data.candidates[0].content.parts[0].text;
+    
+    // Try to parse the response as JSON
+    try {
+      // First, try to extract JSON if it's within markdown code blocks
+      const jsonMatch = generatedText.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+      const jsonStr = jsonMatch ? jsonMatch[1] : generatedText;
+      
+      return JSON.parse(jsonStr);
+    } catch (jsonError) {
+      console.error('Failed to parse Gemini response as JSON:', jsonError);
+      console.log('Raw Gemini response:', generatedText);
+      throw new Error('Failed to parse the AI-generated travel plan');
+    }
   } catch (error) {
     console.error('Error generating travel plan:', error);
-    throw new Error('Failed to generate travel plan. Please try again later.');
+    throw error;
   }
 };
 
@@ -169,44 +216,4 @@ const generateMockTravelPlanData = (): TravelPlanData => {
     ],
     imagePrompt: "The iconic Eiffel Tower in Paris at sunset with the city lights beginning to twinkle, viewed from Trocadéro Gardens with beautiful fountains in the foreground."
   };
-};
-
-// In a real implementation, this function would make an actual API call to Gemini
-export const callGeminiAPI = async (apiKey: string, prompt: string) => {
-  try {
-    const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-goog-api-key': apiKey
-      },
-      body: JSON.stringify({
-        contents: [
-          {
-            parts: [
-              {
-                text: prompt
-              }
-            ]
-          }
-        ],
-        generationConfig: {
-          temperature: 0.7,
-          topK: 40,
-          topP: 0.95,
-          maxOutputTokens: 8192,
-        }
-      })
-    });
-
-    if (!response.ok) {
-      throw new Error(`API request failed with status ${response.status}`);
-    }
-
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    console.error('Error calling Gemini API:', error);
-    throw error;
-  }
 };

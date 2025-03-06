@@ -115,7 +115,7 @@ export const useGenerateAITravelPlan = () => {
           planData = JSON.parse(jsonStr);
         } else {
           // If the result is already an object, use it
-          planData = result as unknown as TravelPlanData;
+          planData = result as TravelPlanData;
         }
         
         // Ensure all required fields exist

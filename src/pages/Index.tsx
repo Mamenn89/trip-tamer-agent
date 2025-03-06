@@ -9,6 +9,7 @@ import Footer from '../components/Footer';
 import LoadingIndicator from '../components/LoadingIndicator';
 import PlannerForm from '../components/PlannerForm';
 import TravelPlan from '../components/TravelPlan';
+import ApiKeyInput from '../components/ApiKeyInput';
 
 const Index = () => {
   const [travelPlan, setTravelPlan] = useState<TravelPlanData | null>(null);
@@ -39,6 +40,10 @@ const Index = () => {
 
       <main className="container mx-auto px-4 py-8">
         <Hero />
+        
+        <div className="max-w-4xl mx-auto my-8">
+          <ApiKeyInput />
+        </div>
         
         <div className="max-w-4xl mx-auto my-12">
           <PlannerForm onSubmit={handleSubmit} loading={loading} />
