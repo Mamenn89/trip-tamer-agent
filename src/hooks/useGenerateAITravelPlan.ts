@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { TravelFormData, TravelPlanData } from '../types';
 import { generateTravelPlan } from '../lib/gemini';

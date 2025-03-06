@@ -21,7 +21,8 @@ export const generateTravelPlan = async (prompt: string): Promise<TravelPlanData
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-goog-api-key': apiKey
+          'x-goog-api-key': apiKey,
+          'Origin': window.location.origin, // Add origin for CORS proxy
         },
         body: JSON.stringify({
           contents: [{ parts: [{ text: prompt }] }],

@@ -7,4 +7,5 @@ export const setApiKey = (key: string) => {
 
 export const getApiKey = () => GEMINI_API_KEY;
 
-export const API_ENDPOINT = 'https://generativelanguage.googleapis.com/v2/models/gemini-pro:generateContent';
+// Use a CORS proxy to work around browser restrictions
+export const API_ENDPOINT = 'https://cors-anywhere.herokuapp.com/https://generativelanguage.googleapis.com/v2/models/gemini-pro:generateContent';
