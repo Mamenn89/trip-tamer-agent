@@ -107,28 +107,24 @@ export const useGenerateAITravelPlan = () => {
       
       // In case the API returns text that is not properly formatted JSON
       let planData: TravelPlanData;
-      try {
-        if (typeof result === 'string') {
-          // Try to extract JSON if it's within markdown code blocks
-          const jsonMatch = result.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
-          const jsonStr = jsonMatch ? jsonMatch[1] : result;
-          planData = JSON.parse(jsonStr);
-        } else {
-          // If the result is already an object, use it
-          planData = result as TravelPlanData;
-        }
-        
-        // Ensure all required fields exist
-        if (!planData.destination || !planData.overview || !planData.dailyItinerary) {
-          throw new Error('Incomplete data returned from AI');
-        }
-        
-        return planData;
-      } catch (jsonError) {
-        console.error('Failed to parse AI response:', jsonError);
-        console.log('Raw response:', result);
-        throw new Error('Failed to generate a valid travel plan. Please try again.');
+      
+      // Fix the TypeScript error by properly checking the type
+      if (typeof result === 'string') {
+        // Try to extract JSON if it's within markdown code blocks
+        const jsonMatch = result.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+        const jsonStr = jsonMatch ? jsonMatch[1] : result;
+        planData = JSON.parse(jsonStr);
+      } else {
+        // If the result is already an object, use it
+        planData = result as TravelPlanData;
       }
+      
+      // Ensure all required fields exist
+      if (!planData.destination || !planData.overview || !planData.dailyItinerary) {
+        throw new Error('Incomplete data returned from AI');
+      }
+      
+      return planData;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to generate travel plan';
       setError(errorMessage);
