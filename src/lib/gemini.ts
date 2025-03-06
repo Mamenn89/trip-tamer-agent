@@ -1,3 +1,4 @@
+
 import { TravelPlanData } from '../types';
 
 // This key should be replaced by user's own API key
@@ -8,7 +9,7 @@ export const setApiKey = (key: string) => {
   GEMINI_API_KEY = key;
 };
 
-export const generateTravelPlan = async (prompt: string): Promise<TravelPlanData> => {
+export const generateTravelPlan = async (prompt: string): Promise<TravelPlanData | string> => {
   try {
     console.log('Generating travel plan with prompt:', prompt);
     
@@ -62,7 +63,9 @@ export const generateTravelPlan = async (prompt: string): Promise<TravelPlanData
     } catch (jsonError) {
       console.error('Failed to parse Gemini response as JSON:', jsonError);
       console.log('Raw Gemini response:', generatedText);
-      throw new Error('Failed to parse the AI-generated travel plan');
+      
+      // Return the raw text if we can't parse it
+      return generatedText;
     }
   } catch (error) {
     console.error('Error generating travel plan:', error);
