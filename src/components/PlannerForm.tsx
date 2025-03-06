@@ -1,6 +1,4 @@
-
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Calendar, Users, DollarSign, MapPin, Heart, X, Plus, Compass } from 'lucide-react';
 import { format } from 'date-fns';
 import { TravelFormData } from '../types';
@@ -24,7 +22,6 @@ interface PlannerFormProps {
 }
 
 const PlannerForm: React.FC<PlannerFormProps> = ({ onSubmit, loading = false }) => {
-  const navigate = useNavigate();
   const [formData, setFormData] = useState<TravelFormData>({
     source: '',
     destination: '',
