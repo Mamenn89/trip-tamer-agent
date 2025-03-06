@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { TravelFormData, TravelPlanData } from '../types';
 import { useGenerateAITravelPlan } from '../hooks/useGenerateAITravelPlan';
@@ -9,7 +8,6 @@ import Footer from '../components/Footer';
 import LoadingIndicator from '../components/LoadingIndicator';
 import PlannerForm from '../components/PlannerForm';
 import TravelPlan from '../components/TravelPlan';
-import ApiKeyInput from '../components/ApiKeyInput';
 import { AlertCircle } from 'lucide-react';
 
 const Index = () => {
@@ -69,10 +67,6 @@ const Index = () => {
 
       <main className="container mx-auto px-4 py-8">
         <Hero />
-        
-        <div className="max-w-4xl mx-auto my-8">
-          <ApiKeyInput />
-        </div>
         
         <div className="max-w-4xl mx-auto my-12">
           <PlannerForm onSubmit={handleSubmit} loading={loading} />

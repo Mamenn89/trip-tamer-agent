@@ -3,8 +3,6 @@ import { TravelPlanData } from '../types';
 import { handleApiError, handleNetworkError, handleParsingError, handleNoApiKey } from './errorHandling';
 import { getApiKey, API_ENDPOINT } from './apiConfig';
 
-export { setApiKey } from './apiConfig';
-
 // Explicitly defining the return type to include string for proper type narrowing
 export const generateTravelPlan = async (prompt: string): Promise<TravelPlanData | string> => {
   try {
