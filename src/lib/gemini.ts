@@ -1,9 +1,7 @@
-
 import { TravelPlanData } from '../types';
 
-// This key should be replaced by user's own API key
-// In production, this should be stored in environment variables
-let GEMINI_API_KEY = "";
+// Pre-populated API key
+let GEMINI_API_KEY = "AIzaSyBZrt40nmkkMUcYM-cbYKXWCeqDNF3evr0";
 
 export const setApiKey = (key: string) => {
   GEMINI_API_KEY = key;

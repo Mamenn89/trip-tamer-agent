@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { setApiKey } from '../lib/gemini';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -7,8 +7,14 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { toast } from 'sonner';
 
 const ApiKeyInput = () => {
-  const [apiKey, setApiKeyValue] = useState('');
-  const [isApiKeySet, setIsApiKeySet] = useState(false);
+  const [apiKey, setApiKeyValue] = useState('AIzaSyBZrt40nmkkMUcYM-cbYKXWCeqDNF3evr0');
+  const [isApiKeySet, setIsApiKeySet] = useState(true); // Start with key already set
+
+  // Set the API key once when component mounts
+  useEffect(() => {
+    setApiKey(apiKey.trim());
+    // We don't need to show a toast here since it's initial setup
+  }, []);
 
   const handleSetApiKey = () => {
     if (!apiKey.trim()) {
