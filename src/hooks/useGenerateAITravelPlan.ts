@@ -108,15 +108,24 @@ export const useGenerateAITravelPlan = () => {
       // In case the API returns text that is not properly formatted JSON
       let planData: TravelPlanData;
       
-      // Fix the TypeScript error by properly checking the type
+      // Fix the TypeScript error by properly checking and handling the result type
       if (typeof result === 'string') {
         // Try to extract JSON if it's within markdown code blocks
         const jsonMatch = result.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
         const jsonStr = jsonMatch ? jsonMatch[1] : result;
-        planData = JSON.parse(jsonStr);
-      } else {
+        try {
+          planData = JSON.parse(jsonStr);
+        } catch (parseError) {
+          console.error('Failed to parse JSON from API response:', parseError);
+          throw new Error('Invalid JSON response from the AI service');
+        }
+      } else if (result && typeof result === 'object') {
         // If the result is already an object, use it
         planData = result as TravelPlanData;
+      } else {
+        // Handle unexpected result type
+        console.error('Unexpected result type from API:', typeof result);
+        throw new Error('Received invalid response from the AI service');
       }
       
       // Ensure all required fields exist
