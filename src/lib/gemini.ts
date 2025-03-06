@@ -15,7 +15,10 @@ export const generateTravelPlan = async (prompt: string): Promise<TravelPlanData
     // If no API key is provided or if we're specifically wanting to use mock data
     if (!GEMINI_API_KEY) {
       console.log('No API key provided, using mock data');
-      return generateMockTravelPlanData();
+      return {
+        ...generateMockTravelPlanData(),
+        overview: "⚠️ NOTE: This is MOCK DATA because no API key was provided. Please enter a valid Gemini API key above."
+      };
     }
     
     try {
@@ -47,7 +50,10 @@ export const generateTravelPlan = async (prompt: string): Promise<TravelPlanData
 
       if (!response.ok) {
         console.error(`API request failed with status ${response.status}`);
-        return generateMockTravelPlanData();
+        return {
+          ...generateMockTravelPlanData(),
+          overview: `⚠️ NOTE: This is MOCK DATA because the API request failed with status ${response.status}. Please check your API key or try again later.`
+        };
       }
 
       const data = await response.json();
@@ -67,17 +73,26 @@ export const generateTravelPlan = async (prompt: string): Promise<TravelPlanData
         console.log('Raw Gemini response:', generatedText);
         
         // Return mock data if we can't parse the response
-        return generateMockTravelPlanData();
+        return {
+          ...generateMockTravelPlanData(),
+          overview: "⚠️ NOTE: This is MOCK DATA because the API response couldn't be parsed as valid JSON. Please try again with different parameters."
+        };
       }
     } catch (fetchError) {
       console.error('Network error while connecting to Gemini API:', fetchError);
       console.log('Falling back to mock data due to network error');
-      return generateMockTravelPlanData();
+      return {
+        ...generateMockTravelPlanData(),
+        overview: "⚠️ NOTE: This is MOCK DATA because of a network error. This might be due to CORS restrictions when accessing the API directly from a browser. Try using a different API key or check your network connection."
+      };
     }
   } catch (error) {
     console.error('Error generating travel plan:', error);
     // Always return mock data on any error to prevent UI from breaking
-    return generateMockTravelPlanData();
+    return {
+      ...generateMockTravelPlanData(),
+      overview: "⚠️ NOTE: This is MOCK DATA because an unexpected error occurred. Please try again with different parameters."
+    };
   }
 };
 
