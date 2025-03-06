@@ -25,7 +25,7 @@ const Index = () => {
       
       // Check if we got mock data due to an error
       if (typeof plan.overview === 'string' && plan.overview.includes('⚠️ NOTE: This is MOCK DATA')) {
-        setNetworkError('API connection error: You are seeing sample data because we could not connect to the Gemini API.');
+        setNetworkError('API connection error: You are seeing sample data because we could not connect to the DeepSeek API.');
       }
       
       // Scroll to results

@@ -12,7 +12,7 @@ export const handleApiError = (status: number): TravelPlanData => {
 export const handleNetworkError = (): TravelPlanData => {
   return {
     ...generateMockTravelPlanData(),
-    overview: "⚠️ NOTE: This is MOCK DATA because of a network error. This might be due to CORS restrictions when accessing the API directly from a browser. Try using a different API key or check your network connection."
+    overview: "⚠️ NOTE: This is MOCK DATA because of a network error. Please check your DeepSeek API key or check your network connection."
   };
 };
 
@@ -26,6 +26,6 @@ export const handleParsingError = (): TravelPlanData => {
 export const handleNoApiKey = (): TravelPlanData => {
   return {
     ...generateMockTravelPlanData(),
-    overview: "⚠️ NOTE: This is MOCK DATA because no API key was provided. Please enter a valid Gemini API key above."
+    overview: "⚠️ NOTE: This is MOCK DATA because no API key was provided. Please enter a valid DeepSeek API key above."
   };
 };

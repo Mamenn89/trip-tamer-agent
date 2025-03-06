@@ -1,11 +1,12 @@
 
-let GEMINI_API_KEY = "AIzaSyBZrt40nmkkMUcYM-cbYKXWCeqDNF3evr0";
+let DEEPSEEK_API_KEY = "sk-71d512488e264690b97f90618c857b41";
 
 export const setApiKey = (key: string) => {
-  GEMINI_API_KEY = key;
+  DEEPSEEK_API_KEY = key;
 };
 
-export const getApiKey = () => GEMINI_API_KEY;
+export const getApiKey = () => DEEPSEEK_API_KEY;
 
-// Use a CORS proxy to work around browser restrictions
-export const API_ENDPOINT = 'https://cors-anywhere.herokuapp.com/https://generativelanguage.googleapis.com/v2/models/gemini-pro:generateContent';
+// DeepSeek API endpoint
+export const API_ENDPOINT = 'https://api.deepseek.com/v1/chat/completions';
+

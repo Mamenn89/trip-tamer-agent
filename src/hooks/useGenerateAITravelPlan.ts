@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { TravelFormData, TravelPlanData } from '../types';
-import { generateTravelPlan } from '../lib/gemini';
+import { generateTravelPlan } from '../lib/deepseekAI';
 
 export const useGenerateAITravelPlan = () => {
   const [loading, setLoading] = useState(false);
@@ -11,7 +11,6 @@ export const useGenerateAITravelPlan = () => {
     setError(null);
     
     try {
-      // Format dates for the prompt
       const startDateStr = formData.startDate 
         ? new Date(formData.startDate).toLocaleDateString('en-US', { 
             month: 'long', 
@@ -28,7 +27,6 @@ export const useGenerateAITravelPlan = () => {
           })
         : 'flexible';
       
-      // Calculate trip duration if dates are provided
       let duration = 'flexible';
       if (formData.startDate && formData.endDate) {
         const start = new Date(formData.startDate);
@@ -37,7 +35,6 @@ export const useGenerateAITravelPlan = () => {
         duration = `${days} days`;
       }
       
-      // Create the prompt for the AI
       const prompt = `
         Create a detailed travel plan from ${formData.source} to ${formData.destination}.
         
@@ -101,16 +98,12 @@ export const useGenerateAITravelPlan = () => {
         For the imagePrompt field, create a descriptive prompt that could be used to generate an image of a notable landmark or scenery from the destination.
       `;
 
-      // Call the Gemini API with the prompt string
       const result = await generateTravelPlan(prompt);
       
-      // In case the API returns text that is not properly formatted JSON
       let planData: TravelPlanData;
       
-      // Process the result based on its type
       if (typeof result === 'string') {
-        // Try to extract JSON if it's within markdown code blocks
-        const jsonString = result as string; // Explicit casting to help TypeScript
+        const jsonString = result as string;
         const jsonMatch = jsonString.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
         const jsonStr = jsonMatch ? jsonMatch[1] : jsonString;
         
@@ -121,15 +114,12 @@ export const useGenerateAITravelPlan = () => {
           throw new Error('Invalid JSON response from the AI service');
         }
       } else if (result && typeof result === 'object') {
-        // If the result is already an object, use it
         planData = result as TravelPlanData;
       } else {
-        // Handle unexpected result type
         console.error('Unexpected result type from API:', typeof result);
         throw new Error('Received invalid response from the AI service');
       }
       
-      // Ensure all required fields exist
       if (!planData.destination || !planData.overview || !planData.dailyItinerary) {
         throw new Error('Incomplete data returned from AI');
       }

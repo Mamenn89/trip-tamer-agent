@@ -21,17 +21,22 @@ export const generateTravelPlan = async (prompt: string): Promise<TravelPlanData
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-goog-api-key': apiKey,
-          'Origin': window.location.origin, // Add origin for CORS proxy
+          'Authorization': `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: {
-            temperature: 0.7,
-            topK: 40,
-            topP: 0.95,
-            maxOutputTokens: 8192,
-          }
+          model: "deepseek-chat",
+          messages: [
+            {
+              role: "system",
+              content: "You are a travel planning assistant. You create detailed travel plans based on user requests. Respond only with valid JSON."
+            },
+            {
+              role: "user", 
+              content: prompt
+            }
+          ],
+          temperature: 0.7,
+          max_tokens: 4000
         })
       });
 
@@ -41,21 +46,21 @@ export const generateTravelPlan = async (prompt: string): Promise<TravelPlanData
       }
 
       const data = await response.json();
-      const generatedText = data.candidates[0].content.parts[0].text;
+      const generatedText = data.choices[0].message.content;
       
       try {
         const jsonMatch = generatedText.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
         const jsonStr = jsonMatch ? jsonMatch[1] : generatedText;
         return JSON.parse(jsonStr);
       } catch (jsonError) {
-        console.error('Failed to parse Gemini response as JSON:', jsonError);
-        console.log('Raw Gemini response:', generatedText);
+        console.error('Failed to parse DeepSeek response as JSON:', jsonError);
+        console.log('Raw DeepSeek response:', generatedText);
         
         // Return the raw text when parsing fails, so calling code can handle it
         return generatedText;
       }
     } catch (fetchError) {
-      console.error('Network error while connecting to Gemini API:', fetchError);
+      console.error('Network error while connecting to DeepSeek API:', fetchError);
       return handleNetworkError();
     }
   } catch (error) {

@@ -1,13 +1,13 @@
 
 import React, { useState, useEffect } from 'react';
-import { setApiKey } from '../lib/gemini';
+import { setApiKey } from '../lib/deepseekAI';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './ui/card';
 import { toast } from 'sonner';
 
 const ApiKeyInput = () => {
-  const [apiKey, setApiKeyValue] = useState('AIzaSyBZrt40nmkkMUcYM-cbYKXWCeqDNF3evr0');
+  const [apiKey, setApiKeyValue] = useState('sk-71d512488e264690b97f90618c857b41');
   const [isApiKeySet, setIsApiKeySet] = useState(true); // Start with key already set
 
   // Set the API key once when component mounts
@@ -30,7 +30,7 @@ const ApiKeyInput = () => {
   const handleReset = () => {
     setApiKeyValue('');
     setIsApiKeySet(false);
-    setApiKey(''); // Reset the API key in the gemini.ts module
+    setApiKey(''); // Reset the API key in the deepseekAI.ts module
     toast.info('API key has been reset');
   };
 
@@ -55,9 +55,9 @@ const ApiKeyInput = () => {
   return (
     <Card className="bg-white/80 backdrop-blur-md shadow-lg">
       <CardHeader>
-        <CardTitle className="text-lg">Enter your Gemini API Key</CardTitle>
+        <CardTitle className="text-lg">Enter your DeepSeek API Key</CardTitle>
         <CardDescription>
-          Required to generate AI travel plans. Get your key from Google AI Studio.
+          Required to generate AI travel plans. Get your key from DeepSeek AI platform.
         </CardDescription>
       </CardHeader>
       <CardContent>
