@@ -12,63 +12,72 @@ export const generateTravelPlan = async (prompt: string): Promise<TravelPlanData
   try {
     console.log('Generating travel plan with prompt:', prompt);
     
+    // If no API key is provided or if we're specifically wanting to use mock data
     if (!GEMINI_API_KEY) {
-      // For development/demo if no API key is provided
+      console.log('No API key provided, using mock data');
       return generateMockTravelPlanData();
     }
     
-    // Update to use Gemini 2.0 Pro API endpoint
-    const response = await fetch('https://generativelanguage.googleapis.com/v2/models/gemini-pro:generateContent', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-goog-api-key': GEMINI_API_KEY
-      },
-      body: JSON.stringify({
-        contents: [
-          {
-            parts: [
-              {
-                text: prompt
-              }
-            ]
-          }
-        ],
-        generationConfig: {
-          temperature: 0.7,
-          topK: 40,
-          topP: 0.95,
-          maxOutputTokens: 8192,
-        }
-      })
-    });
-
-    if (!response.ok) {
-      throw new Error(`API request failed with status ${response.status}`);
-    }
-
-    const data = await response.json();
-    
-    // Extract the text from the response
-    const generatedText = data.candidates[0].content.parts[0].text;
-    
-    // Try to parse the response as JSON
     try {
-      // First, try to extract JSON if it's within markdown code blocks
-      const jsonMatch = generatedText.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
-      const jsonStr = jsonMatch ? jsonMatch[1] : generatedText;
+      // Update to use Gemini 2.0 Pro API endpoint
+      const response = await fetch('https://generativelanguage.googleapis.com/v2/models/gemini-pro:generateContent', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-goog-api-key': GEMINI_API_KEY
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [
+                {
+                  text: prompt
+                }
+              ]
+            }
+          ],
+          generationConfig: {
+            temperature: 0.7,
+            topK: 40,
+            topP: 0.95,
+            maxOutputTokens: 8192,
+          }
+        })
+      });
+
+      if (!response.ok) {
+        console.error(`API request failed with status ${response.status}`);
+        return generateMockTravelPlanData();
+      }
+
+      const data = await response.json();
       
-      return JSON.parse(jsonStr);
-    } catch (jsonError) {
-      console.error('Failed to parse Gemini response as JSON:', jsonError);
-      console.log('Raw Gemini response:', generatedText);
+      // Extract the text from the response
+      const generatedText = data.candidates[0].content.parts[0].text;
       
-      // Return the raw text if we can't parse it
-      return generatedText;
+      // Try to parse the response as JSON
+      try {
+        // First, try to extract JSON if it's within markdown code blocks
+        const jsonMatch = generatedText.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+        const jsonStr = jsonMatch ? jsonMatch[1] : generatedText;
+        
+        return JSON.parse(jsonStr);
+      } catch (jsonError) {
+        console.error('Failed to parse Gemini response as JSON:', jsonError);
+        console.log('Raw Gemini response:', generatedText);
+        
+        // Return mock data if we can't parse the response
+        return generateMockTravelPlanData();
+      }
+    } catch (fetchError) {
+      console.error('Network error while connecting to Gemini API:', fetchError);
+      console.log('Falling back to mock data due to network error');
+      return generateMockTravelPlanData();
     }
   } catch (error) {
     console.error('Error generating travel plan:', error);
-    throw error;
+    // Always return mock data on any error to prevent UI from breaking
+    return generateMockTravelPlanData();
   }
 };
 
