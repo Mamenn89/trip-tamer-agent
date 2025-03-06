@@ -5,7 +5,8 @@ import { getApiKey, API_ENDPOINT } from './apiConfig';
 
 export { setApiKey } from './apiConfig';
 
-export const generateTravelPlan = async (prompt: string): Promise<TravelPlanData> => {
+// Explicitly defining the return type to include string for proper type narrowing
+export const generateTravelPlan = async (prompt: string): Promise<TravelPlanData | string> => {
   try {
     console.log('Generating travel plan with prompt:', prompt);
     
@@ -48,7 +49,9 @@ export const generateTravelPlan = async (prompt: string): Promise<TravelPlanData
       } catch (jsonError) {
         console.error('Failed to parse Gemini response as JSON:', jsonError);
         console.log('Raw Gemini response:', generatedText);
-        return handleParsingError();
+        
+        // Return the raw text when parsing fails, so calling code can handle it
+        return generatedText;
       }
     } catch (fetchError) {
       console.error('Network error while connecting to Gemini API:', fetchError);

@@ -108,11 +108,13 @@ export const useGenerateAITravelPlan = () => {
       // In case the API returns text that is not properly formatted JSON
       let planData: TravelPlanData;
       
-      // Fix the TypeScript error by properly checking and handling the result type
+      // Process the result based on its type
       if (typeof result === 'string') {
         // Try to extract JSON if it's within markdown code blocks
-        const jsonMatch = result.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
-        const jsonStr = jsonMatch ? jsonMatch[1] : result;
+        const jsonString = result as string; // Explicit casting to help TypeScript
+        const jsonMatch = jsonString.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+        const jsonStr = jsonMatch ? jsonMatch[1] : jsonString;
+        
         try {
           planData = JSON.parse(jsonStr);
         } catch (parseError) {
