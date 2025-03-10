@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { MapPin, Mail, Globe, Github, Twitter, Instagram } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -13,7 +12,7 @@ const Footer: React.FC = () => {
               <div className="flex items-center justify-center w-9 h-9 rounded-full bg-blue-50">
                 <MapPin className="w-5 h-5 text-blue-500" />
               </div>
-              <span className="text-xl font-semibold">TravelMate</span>
+              <span className="text-xl font-semibold">Dika Travel Mate</span>
             </div>
             <p className="text-gray-500 text-sm">
               Your AI-powered travel companion. Plan your perfect trip with personalized recommendations and itineraries.
@@ -68,7 +67,7 @@ const Footer: React.FC = () => {
         </div>
         <div className="mt-12 pt-8 border-t border-gray-100">
           <p className="text-gray-400 text-sm text-center">
-            © {new Date().getFullYear()} TravelMate. All rights reserved.
+            © {new Date().getFullYear()} Dika Travel Mate. All rights reserved.
           </p>
         </div>
       </div>
