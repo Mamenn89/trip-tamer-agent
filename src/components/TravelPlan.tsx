@@ -1,14 +1,13 @@
 
 import React, { useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight, MapPin, Clock, DollarSign, Plane, Hotel, Info, Download, Share2 } from 'lucide-react';
-import { TravelPlan as TravelPlanType, TravelPlanData } from '../types';
+import { TravelPlan as TravelPlanType } from '../types';
 import TravelCard from './TravelCard';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import FlightSuggestions from './FlightSuggestions';
 
 interface TravelPlanProps {
-  plan: TravelPlanData;
+  plan: TravelPlanType;
   onStartOver: () => void;
 }
 
@@ -37,32 +36,6 @@ const TravelPlan: React.FC<TravelPlanProps> = ({ plan, onStartOver }) => {
       element.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
   };
-
-  // Convert TravelPlanData to format expected by TravelCard
-  const getDays = () => {
-    if (!plan.dailyItinerary) return [];
-    
-    return plan.dailyItinerary.map(day => ({
-      day: day.day,
-      date: day.title,
-      activities: day.activities.map((activity, index) => ({
-        time: `${index + 8}:00 ${index + 8 >= 12 ? 'PM' : 'AM'}`,
-        description: activity,
-        type: 'sightseeing' as const,
-        location: plan.destination
-      }))
-    }));
-  };
-  
-  const days = getDays();
-  
-  // Parse the departure date from the first day's title if available
-  const getDepartureDate = () => {
-    if (plan.dailyItinerary && plan.dailyItinerary.length > 0) {
-      return plan.dailyItinerary[0].title;
-    }
-    return "flexible";
-  };
   
   return (
     <div className="max-w-4xl mx-auto animate-reveal">
@@ -72,14 +45,14 @@ const TravelPlan: React.FC<TravelPlanProps> = ({ plan, onStartOver }) => {
           <div className="flex flex-wrap gap-y-2 gap-x-4 text-blue-100 mb-4">
             <div className="flex items-center">
               <Clock className="w-4 h-4 mr-1.5" />
-              <span>{plan.duration}</span>
+              <span>{plan.duration} days</span>
             </div>
             <div className="flex items-center">
               <DollarSign className="w-4 h-4 mr-1.5" />
-              <span>Budget: ${plan.budgetBreakdown?.total || 0}</span>
+              <span>Budget: ${plan.totalBudget}</span>
             </div>
           </div>
-          <p className="text-blue-50 max-w-3xl">{plan.overview}</p>
+          <p className="text-blue-50 max-w-3xl">{plan.summary}</p>
           
           <div className="mt-6 flex flex-wrap gap-3">
             <Button 
@@ -111,7 +84,6 @@ const TravelPlan: React.FC<TravelPlanProps> = ({ plan, onStartOver }) => {
       <Tabs defaultValue="itinerary" className="mb-8">
         <TabsList className="w-full bg-white shadow-sm border border-gray-100 p-1">
           <TabsTrigger value="itinerary" className="flex-1">Itinerary</TabsTrigger>
-          <TabsTrigger value="flights" className="flex-1">Flights</TabsTrigger>
           <TabsTrigger value="overview" className="flex-1">Overview</TabsTrigger>
           <TabsTrigger value="tips" className="flex-1">Travel Tips</TabsTrigger>
         </TabsList>
@@ -135,7 +107,7 @@ const TravelPlan: React.FC<TravelPlanProps> = ({ plan, onStartOver }) => {
               className="flex space-x-2 overflow-x-auto py-2 px-10 scrollbar-hide"
               style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
             >
-              {days.map((day) => (
+              {plan.days.map((day) => (
                 <button
                   key={day.day}
                   className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
@@ -164,7 +136,7 @@ const TravelPlan: React.FC<TravelPlanProps> = ({ plan, onStartOver }) => {
           
           {/* Day cards */}
           <div className="space-y-8">
-            {days.map((day) => (
+            {plan.days.map((day) => (
               <div key={day.day} id={`day-card-${day.day}`}>
                 <TravelCard day={day.day} date={day.date} activities={day.activities} />
               </div>
@@ -172,111 +144,116 @@ const TravelPlan: React.FC<TravelPlanProps> = ({ plan, onStartOver }) => {
           </div>
         </TabsContent>
         
-        <TabsContent value="flights" className="pt-6">
-          <div className="bg-white rounded-xl shadow-subtle overflow-hidden">
-            <div className="bg-blue-50 px-6 py-4 border-b border-blue-100">
-              <div className="flex items-center space-x-2">
-                <Plane className="text-blue-600 w-5 h-5" />
-                <h3 className="font-medium text-gray-900">Flight Options</h3>
-              </div>
-            </div>
-            
-            <div className="p-6">
-              <FlightSuggestions
-                source={plan.flightSuggestions?.source || "Unknown"}
-                destination={plan.destination}
-                date={getDepartureDate()}
-              />
-            </div>
-          </div>
-        </TabsContent>
-        
         <TabsContent value="overview" className="pt-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Budget Breakdown */}
-            <div className="bg-white rounded-xl shadow-subtle overflow-hidden">
-              <div className="bg-blue-50 px-6 py-4 border-b border-blue-100">
-                <div className="flex items-center space-x-2">
-                  <DollarSign className="text-blue-600 w-5 h-5" />
-                  <h3 className="font-medium text-gray-900">Budget Breakdown</h3>
+            {/* Flight Information */}
+            {plan.flightInfo && (
+              <div className="bg-white rounded-xl shadow-subtle overflow-hidden">
+                <div className="bg-blue-50 px-6 py-4 border-b border-blue-100">
+                  <div className="flex items-center space-x-2">
+                    <Plane className="text-blue-600 w-5 h-5" />
+                    <h3 className="font-medium text-gray-900">Flight Information</h3>
+                  </div>
+                </div>
+                
+                <div className="p-6">
+                  <div className="mb-4">
+                    <div className="text-sm text-gray-500 mb-1">Airline</div>
+                    <div className="font-medium">{plan.flightInfo.airline}</div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                      <div className="text-sm text-gray-500 mb-1">Departure</div>
+                      <div className="font-medium">{plan.flightInfo.departureTime}</div>
+                    </div>
+                    <div>
+                      <div className="text-sm text-gray-500 mb-1">Arrival</div>
+                      <div className="font-medium">{plan.flightInfo.arrivalTime}</div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-between items-center pt-4 border-t border-gray-100">
+                    <span className="text-sm text-gray-500">Price</span>
+                    <div className="font-semibold text-lg">
+                      ${plan.flightInfo.price}
+                    </div>
+                  </div>
                 </div>
               </div>
-              
-              <div className="p-6">
-                {plan.budgetBreakdown && (
-                  <>
-                    <div className="space-y-3">
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Accommodation</span>
-                        <span className="font-medium">${plan.budgetBreakdown.accommodation}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Transportation</span>
-                        <span className="font-medium">${plan.budgetBreakdown.transportation}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Food</span>
-                        <span className="font-medium">${plan.budgetBreakdown.food}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Activities</span>
-                        <span className="font-medium">${plan.budgetBreakdown.activities}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Miscellaneous</span>
-                        <span className="font-medium">${plan.budgetBreakdown.miscellaneous}</span>
-                      </div>
-                    </div>
-                    
-                    <div className="mt-4 pt-4 border-t border-gray-100">
-                      <div className="flex justify-between">
-                        <span className="font-semibold">Total</span>
-                        <span className="font-semibold text-lg">${plan.budgetBreakdown.total}</span>
-                      </div>
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
+            )}
             
             {/* Accommodation Information */}
-            <div className="bg-white rounded-xl shadow-subtle overflow-hidden">
-              <div className="bg-blue-50 px-6 py-4 border-b border-blue-100">
-                <div className="flex items-center space-x-2">
-                  <Hotel className="text-blue-600 w-5 h-5" />
-                  <h3 className="font-medium text-gray-900">Recommended Accommodations</h3>
+            {plan.accommodation && (
+              <div className="bg-white rounded-xl shadow-subtle overflow-hidden">
+                <div className="bg-blue-50 px-6 py-4 border-b border-blue-100">
+                  <div className="flex items-center space-x-2">
+                    <Hotel className="text-blue-600 w-5 h-5" />
+                    <h3 className="font-medium text-gray-900">Accommodation</h3>
+                  </div>
+                </div>
+                
+                <div className="p-6">
+                  <div className="mb-4">
+                    <div className="text-sm text-gray-500 mb-1">Hotel</div>
+                    <div className="font-medium">{plan.accommodation.name}</div>
+                  </div>
+                  
+                  <div className="mb-4">
+                    <div className="text-sm text-gray-500 mb-1">Location</div>
+                    <div className="flex items-center">
+                      <MapPin className="w-4 h-4 text-gray-400 mr-1" />
+                      <span>{plan.accommodation.location}</span>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-100">
+                    <div>
+                      <div className="text-sm text-gray-500 mb-1">Per Night</div>
+                      <div className="font-medium">${plan.accommodation.pricePerNight}</div>
+                    </div>
+                    <div>
+                      <div className="text-sm text-gray-500 mb-1">Total Stay</div>
+                      <div className="font-semibold text-lg">${plan.accommodation.totalCost}</div>
+                    </div>
+                  </div>
                 </div>
               </div>
-              
-              <div className="p-6">
-                {plan.accommodations && plan.accommodations.map((accommodation, index) => (
-                  <div key={index} className={`${index > 0 ? 'mt-4 pt-4 border-t border-gray-100' : ''}`}>
-                    <div className="font-medium">{accommodation.name}</div>
-                    <p className="text-sm text-gray-600 mt-1">{accommodation.description}</p>
-                    <div className="text-sm text-blue-600 mt-1">{accommodation.priceRange}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
+            )}
           </div>
           
-          {/* Local Cuisine */}
+          {/* Budget Summary */}
           <div className="mt-6 bg-white rounded-xl shadow-subtle overflow-hidden">
             <div className="bg-blue-50 px-6 py-4 border-b border-blue-100">
               <div className="flex items-center space-x-2">
-                <Info className="text-blue-600 w-5 h-5" />
-                <h3 className="font-medium text-gray-900">Must-Try Local Cuisine</h3>
+                <DollarSign className="text-blue-600 w-5 h-5" />
+                <h3 className="font-medium text-gray-900">Budget Summary</h3>
               </div>
             </div>
             
             <div className="p-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {plan.localCuisine && plan.localCuisine.map((cuisine, index) => (
-                  <div key={index} className="bg-gray-50 rounded-lg p-4">
-                    <div className="font-medium">{cuisine.name}</div>
-                    <p className="text-sm text-gray-600 mt-1">{cuisine.description}</p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <div className="text-sm text-gray-500 mb-1">Flights</div>
+                  <div className="font-semibold">${plan.flightInfo?.price || 0}</div>
+                </div>
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <div className="text-sm text-gray-500 mb-1">Accommodation</div>
+                  <div className="font-semibold">${plan.accommodation?.totalCost || 0}</div>
+                </div>
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <div className="text-sm text-gray-500 mb-1">Activities & Food</div>
+                  <div className="font-semibold">
+                    ${plan.totalBudget - (plan.flightInfo?.price || 0) - (plan.accommodation?.totalCost || 0)}
                   </div>
-                ))}
+                </div>
+              </div>
+              
+              <div className="mt-6 pt-4 border-t border-gray-100 flex justify-between items-center">
+                <span className="font-medium">Total Budget</span>
+                <div className="font-semibold text-xl">
+                  ${plan.totalBudget}
+                </div>
               </div>
             </div>
           </div>
@@ -293,7 +270,7 @@ const TravelPlan: React.FC<TravelPlanProps> = ({ plan, onStartOver }) => {
             
             <div className="p-6">
               <ul className="space-y-4">
-                {plan.travelTips && plan.travelTips.map((tip, index) => (
+                {plan.tips.map((tip, index) => (
                   <li key={index} className="flex">
                     <span className="flex-shrink-0 flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 text-blue-600 text-sm mr-3">
                       {index + 1}
