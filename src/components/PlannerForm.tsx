@@ -1,12 +1,12 @@
+
 import React, { useState } from 'react';
-import { Calendar, Users, DollarSign, MapPin, Heart, X, Plus, Compass } from 'lucide-react';
+import { Calendar, Users, MapPin, Heart, X, Plus, Compass, Tag, Wallet, Diamond } from 'lucide-react';
 import { format } from 'date-fns';
 import { TravelFormData } from '../types';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Slider } from '@/components/ui/slider';
 import { cn } from '@/lib/utils';
 
 // Common interests
