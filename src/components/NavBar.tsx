@@ -67,7 +67,7 @@ const NavBar: React.FC = () => {
           
           {isAuthenticated ? (
             <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-600">Hi, {currentUser?.name}</span>
+              <span className="text-sm text-gray-600">Hi, {currentUser?.email?.split('@')[0]}</span>
               <Button 
                 variant="ghost" 
                 size="sm" 

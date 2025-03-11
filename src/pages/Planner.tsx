@@ -44,7 +44,7 @@ const Planner = () => {
       <main className="container mx-auto px-4 py-8">
         <div className="mb-8 text-center">
           <h1 className="text-3xl font-bold">Plan Your Journey</h1>
-          <p className="text-gray-600 mt-2">Welcome, {currentUser?.name || 'Traveler'}! Create your perfect travel itinerary.</p>
+          <p className="text-gray-600 mt-2">Welcome, {currentUser?.email?.split('@')[0] || 'Traveler'}! Create your perfect travel itinerary.</p>
         </div>
         
         <div className="max-w-4xl mx-auto my-12">
