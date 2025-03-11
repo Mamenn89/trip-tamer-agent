@@ -1,4 +1,9 @@
 
 /// <reference types="vite/client" />
 
-// No environment variables needed for Supabase as it's configured in the client
+// Define Google Maps types on the window object
+interface Window {
+  google?: {
+    maps: any;
+  };
+}
