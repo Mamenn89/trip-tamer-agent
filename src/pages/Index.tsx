@@ -32,15 +32,6 @@ const Index = () => {
                 Start Planning Now
               </Button>
             </Link>
-            
-            <Link to="/about">
-              <Button 
-                variant="outline"
-                className="px-8 py-6 font-medium text-lg rounded-lg transition-colors"
-              >
-                Learn More
-              </Button>
-            </Link>
           </div>
         </div>
       </main>
