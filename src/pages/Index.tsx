@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { TravelFormData, TravelPlanData } from '../types';
+import { TravelFormData, TravelPlan } from '../types';
 import { useGenerateAITravelPlan } from '../hooks/useGenerateAITravelPlan';
 import AnimatedBackground from '../components/AnimatedBackground';
 import NavBar from '../components/NavBar';
@@ -8,10 +8,10 @@ import Hero from '../components/Hero';
 import Footer from '../components/Footer';
 import LoadingIndicator from '../components/LoadingIndicator';
 import PlannerForm from '../components/PlannerForm';
-import TravelPlan from '../components/TravelPlan';
+import TravelPlanComponent from '../components/TravelPlan';
 
 const Index = () => {
-  const [travelPlan, setTravelPlan] = useState<TravelPlanData | null>(null);
+  const [travelPlan, setTravelPlan] = useState<TravelPlan | null>(null);
   const { generatePlan, loading, error } = useGenerateAITravelPlan();
 
   const handleSubmit = async (formData: TravelFormData) => {
@@ -25,6 +25,12 @@ const Index = () => {
     } catch (err) {
       console.error('Error generating travel plan:', err);
     }
+  };
+
+  const handleStartOver = () => {
+    setTravelPlan(null);
+    // Scroll back to the top or to the form
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
@@ -58,7 +64,7 @@ const Index = () => {
 
         {travelPlan && !loading && (
           <div id="results" className="my-12 scroll-mt-24">
-            <TravelPlan plan={travelPlan} />
+            <TravelPlanComponent plan={travelPlan} onStartOver={handleStartOver} />
           </div>
         )}
       </main>

@@ -1,13 +1,13 @@
 
 import { useState } from 'react';
-import { TravelFormData, TravelPlanData } from '../types';
+import { TravelFormData, TravelPlan } from '../types';
 import { generateTravelPlan } from '../lib/gemini';
 
 export const useGenerateAITravelPlan = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const generatePlan = async (formData: TravelFormData): Promise<TravelPlanData> => {
+  const generatePlan = async (formData: TravelFormData): Promise<TravelPlan> => {
     setLoading(true);
     setError(null);
     
@@ -103,22 +103,20 @@ export const useGenerateAITravelPlan = () => {
       `;
 
       // Call the Gemini API
-      const result = await generateTravelPlan(prompt);
+      const result = await generateTravelPlan(formData);
       
       // In case the API returns text that is not properly formatted JSON
-      let planData: TravelPlanData;
+      let planData: TravelPlan;
       try {
-        if (typeof result === 'string') {
-          // Try to extract JSON if it's within markdown code blocks
-          const jsonMatch = result.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
-          const jsonStr = jsonMatch ? jsonMatch[1] : result;
-          planData = JSON.parse(jsonStr);
+        if (typeof result === 'object') {
+          planData = result as TravelPlan;
         } else {
-          planData = result as TravelPlanData;
+          // If we somehow got a string instead of an object, throw an error
+          throw new Error('Invalid response format from API');
         }
         
         // Ensure all required fields exist
-        if (!planData.destination || !planData.overview || !planData.dailyItinerary) {
+        if (!planData.destination || !planData.days) {
           throw new Error('Incomplete data returned from AI');
         }
         
