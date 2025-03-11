@@ -1,38 +1,14 @@
 
-import React, { useState } from 'react';
-import { TravelFormData, TravelPlan } from '../types';
-import { useGenerateAITravelPlan } from '../hooks/useGenerateAITravelPlan';
+import React from 'react';
+import { Link } from 'react-router-dom';
 import AnimatedBackground from '../components/AnimatedBackground';
 import NavBar from '../components/NavBar';
 import Hero from '../components/Hero';
 import Footer from '../components/Footer';
-import LoadingIndicator from '../components/LoadingIndicator';
-import PlannerForm from '../components/PlannerForm';
-import TravelPlanComponent from '../components/TravelPlan';
+import { Button } from '@/components/ui/button';
+import { MapPin } from 'lucide-react';
 
 const Index = () => {
-  const [travelPlan, setTravelPlan] = useState<TravelPlan | null>(null);
-  const { generatePlan, loading, error } = useGenerateAITravelPlan();
-
-  const handleSubmit = async (formData: TravelFormData) => {
-    try {
-      const plan = await generatePlan(formData);
-      setTravelPlan(plan);
-      // Scroll to results
-      setTimeout(() => {
-        document.getElementById('results')?.scrollIntoView({ behavior: 'smooth' });
-      }, 100);
-    } catch (err) {
-      console.error('Error generating travel plan:', err);
-    }
-  };
-
-  const handleStartOver = () => {
-    setTravelPlan(null);
-    // Scroll back to the top or to the form
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
   return (
     <div className="relative min-h-screen">
       <AnimatedBackground />
@@ -41,32 +17,32 @@ const Index = () => {
       <main className="container mx-auto px-4 py-8">
         <Hero />
         
-        <div className="max-w-4xl mx-auto my-12">
-          <PlannerForm onSubmit={handleSubmit} loading={loading} />
+        <div className="max-w-4xl mx-auto my-16 text-center">
+          <h2 className="text-3xl font-bold mb-6">Ready to plan your next adventure?</h2>
+          <p className="text-xl text-gray-600 mb-8">
+            Create personalized travel itineraries tailored to your interests and budget.
+          </p>
+          
+          <div className="flex flex-col sm:flex-row justify-center gap-4">
+            <Link to="/login">
+              <Button 
+                className="px-8 py-6 bg-blue-600 hover:bg-blue-700 text-white font-medium text-lg rounded-lg transition-colors shadow-sm"
+              >
+                <MapPin className="w-5 h-5 mr-2" />
+                Start Planning Now
+              </Button>
+            </Link>
+            
+            <Link to="/about">
+              <Button 
+                variant="outline"
+                className="px-8 py-6 font-medium text-lg rounded-lg transition-colors"
+              >
+                Learn More
+              </Button>
+            </Link>
+          </div>
         </div>
-
-        {loading && (
-          <div className="my-12 text-center">
-            <LoadingIndicator />
-            <p className="mt-4 text-lg text-gray-600">
-              Crafting your perfect travel plan...
-            </p>
-          </div>
-        )}
-
-        {error && (
-          <div className="my-12 p-6 bg-red-50 rounded-lg border border-red-100 text-center">
-            <h3 className="text-lg font-medium text-red-800 mb-2">Something went wrong</h3>
-            <p className="text-red-600">{error}</p>
-            <p className="mt-2 text-sm text-red-500">Please try again with different parameters</p>
-          </div>
-        )}
-
-        {travelPlan && !loading && (
-          <div id="results" className="my-12 scroll-mt-24">
-            <TravelPlanComponent plan={travelPlan} onStartOver={handleStartOver} />
-          </div>
-        )}
       </main>
 
       <Footer />

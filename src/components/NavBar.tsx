@@ -1,12 +1,17 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { MapPin, Menu, X } from 'lucide-react';
+import { MapPin, Menu, X, LogOut } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/components/ui/use-toast';
 
 const NavBar: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
+  const { currentUser, logout, isAuthenticated } = useAuth();
+  const { toast } = useToast();
   
   useEffect(() => {
     const handleScroll = () => {
@@ -25,6 +30,14 @@ const NavBar: React.FC = () => {
     // Close mobile menu when route changes
     setIsMobileMenuOpen(false);
   }, [location]);
+
+  const handleLogout = async () => {
+    await logout();
+    toast({
+      title: "Logged out successfully",
+      duration: 3000,
+    });
+  };
   
   return (
     <header 
@@ -46,9 +59,30 @@ const NavBar: React.FC = () => {
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center space-x-8">
           <NavLink to="/" label="Home" currentPath={location.pathname} />
-          <NavLink to="/planner" label="Plan a Trip" currentPath={location.pathname} />
+          {isAuthenticated && (
+            <NavLink to="/planner" label="Plan a Trip" currentPath={location.pathname} />
+          )}
           <NavLink to="/inspiration" label="Inspiration" currentPath={location.pathname} />
           <NavLink to="/about" label="About" currentPath={location.pathname} />
+          
+          {isAuthenticated ? (
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-600">Hi, {currentUser?.name}</span>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={handleLogout}
+                className="flex items-center gap-1 text-red-600 hover:text-red-700 hover:bg-red-50"
+              >
+                <LogOut className="w-4 h-4" />
+                Logout
+              </Button>
+            </div>
+          ) : (
+            <Link to="/login">
+              <Button>Login</Button>
+            </Link>
+          )}
         </nav>
         
         {/* Mobile menu button */}
@@ -65,9 +99,35 @@ const NavBar: React.FC = () => {
           <div className="absolute top-full left-0 right-0 bg-white shadow-md p-4 md:hidden animate-slide-down">
             <nav className="flex flex-col space-y-4">
               <MobileNavLink to="/" label="Home" onClick={() => setIsMobileMenuOpen(false)} />
-              <MobileNavLink to="/planner" label="Plan a Trip" onClick={() => setIsMobileMenuOpen(false)} />
+              {isAuthenticated && (
+                <MobileNavLink to="/planner" label="Plan a Trip" onClick={() => setIsMobileMenuOpen(false)} />
+              )}
               <MobileNavLink to="/inspiration" label="Inspiration" onClick={() => setIsMobileMenuOpen(false)} />
               <MobileNavLink to="/about" label="About" onClick={() => setIsMobileMenuOpen(false)} />
+              
+              {isAuthenticated ? (
+                <div className="pt-2 border-t border-gray-100">
+                  <div className="text-sm text-gray-600 mb-2">Signed in as {currentUser?.email}</div>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => {
+                      handleLogout();
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="flex items-center w-full justify-start gap-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    Logout
+                  </Button>
+                </div>
+              ) : (
+                <div className="pt-2 border-t border-gray-100">
+                  <Link to="/login" className="block w-full" onClick={() => setIsMobileMenuOpen(false)}>
+                    <Button className="w-full">Login</Button>
+                  </Link>
+                </div>
+              )}
             </nav>
           </div>
         )}
