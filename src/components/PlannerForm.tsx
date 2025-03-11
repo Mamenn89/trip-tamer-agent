@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { MapPin, Compass } from 'lucide-react';
 import { TravelFormData } from '../types';
@@ -28,6 +27,13 @@ const PlannerForm: React.FC<PlannerFormProps> = ({ onSubmit, loading = false }) 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+  
+  const handlePlaceSelect = (fieldName: string) => (place: any) => {
+    setFormData(prev => ({ 
+      ...prev, 
+      [fieldName]: place.formatted_address || '' 
+    }));
   };
   
   const handleBudgetChange = (value: number) => {
@@ -75,6 +81,7 @@ const PlannerForm: React.FC<PlannerFormProps> = ({ onSubmit, loading = false }) 
           placeholder="Where are you starting from?"
           icon={MapPin}
           onChange={handleChange}
+          onPlaceSelect={handlePlaceSelect('source')}
           required
         />
         
@@ -86,6 +93,7 @@ const PlannerForm: React.FC<PlannerFormProps> = ({ onSubmit, loading = false }) 
           placeholder="Where are you going?"
           icon={Compass}
           onChange={handleChange}
+          onPlaceSelect={handlePlaceSelect('destination')}
           required
         />
       </div>

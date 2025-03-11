@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Heart } from 'lucide-react';
+import { Compass } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface SubmitButtonProps {
@@ -16,8 +16,8 @@ const SubmitButton: React.FC<SubmitButtonProps> = ({ loading, disabled }) => {
         className="w-full sm:w-auto px-8 py-6 bg-blue-600 hover:bg-blue-700 text-white font-medium text-lg rounded-lg transition-colors shadow-sm disabled:opacity-70"
         disabled={loading || disabled}
       >
-        <Heart className="w-5 h-5 mr-2" />
-        <span>Generate My Travel Plan</span>
+        <Compass className="w-5 h-5 mr-2" />
+        <span>{loading ? 'Generating Plan...' : 'Generate My Travel Plan'}</span>
       </Button>
     </div>
   );

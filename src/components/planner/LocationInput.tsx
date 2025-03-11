@@ -2,6 +2,7 @@
 import React from 'react';
 import { LucideIcon } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import Autocomplete from 'react-google-autocomplete';
 
 interface LocationInputProps {
   label: string;
@@ -10,6 +11,7 @@ interface LocationInputProps {
   placeholder: string;
   icon: LucideIcon;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onPlaceSelect?: (place: any) => void;
   required?: boolean;
 }
 
@@ -20,21 +22,36 @@ const LocationInput: React.FC<LocationInputProps> = ({
   placeholder,
   icon: Icon,
   onChange,
+  onPlaceSelect,
   required = false,
 }) => {
   return (
     <div>
       <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
       <div className="relative">
-        <Icon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-5 h-5" />
-        <Input
-          required={required}
-          type="text"
-          name={name}
+        <Icon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-5 h-5 z-10" />
+        <Autocomplete
+          apiKey={process.env.GOOGLE_MAPS_API_KEY || ''}
+          onPlaceSelected={(place) => {
+            if (onPlaceSelect) {
+              onPlaceSelect(place);
+            }
+            // Create a synthetic event to maintain compatibility with existing onChange
+            const syntheticEvent = {
+              target: {
+                name,
+                value: place.formatted_address || '',
+              },
+            } as React.ChangeEvent<HTMLInputElement>;
+            onChange(syntheticEvent);
+          }}
+          options={{
+            types: ['(cities)'],
+            componentRestrictions: { country: '' }, // No country restriction
+          }}
+          defaultValue={value}
+          className="w-full h-10 pl-10 bg-white focus:ring-blue-500 flex rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
           placeholder={placeholder}
-          value={value}
-          onChange={onChange}
-          className="pl-10 bg-white focus:ring-blue-500"
         />
       </div>
     </div>
