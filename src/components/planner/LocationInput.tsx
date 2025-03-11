@@ -25,13 +25,16 @@ const LocationInput: React.FC<LocationInputProps> = ({
   onPlaceSelect,
   required = false,
 }) => {
+  // In Vite, environment variables must be prefixed with VITE_
+  const googleMapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
+  
   return (
     <div>
       <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
       <div className="relative">
         <Icon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-5 h-5 z-10" />
         <Autocomplete
-          apiKey={process.env.GOOGLE_MAPS_API_KEY || ''}
+          apiKey={googleMapsApiKey}
           onPlaceSelected={(place) => {
             if (onPlaceSelect) {
               onPlaceSelect(place);
