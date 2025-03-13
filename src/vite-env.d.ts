@@ -6,4 +6,6 @@ interface Window {
   google?: {
     maps: any;
   };
+  // Add the Google Maps authentication failure callback
+  gm_authFailure?: () => void;
 }
