@@ -16,7 +16,7 @@ export type Database = {
           destination: string
           duration: number
           end_date: string | null
-          flight: Json | null
+          flights: Json | null
           hotels: Json | null
           id: string
           origin: string
@@ -32,7 +32,7 @@ export type Database = {
           destination: string
           duration: number
           end_date?: string | null
-          flight?: Json | null
+          flights?: Json | null
           hotels?: Json | null
           id?: string
           origin: string
@@ -48,7 +48,7 @@ export type Database = {
           destination?: string
           duration?: number
           end_date?: string | null
-          flight?: Json | null
+          flights?: Json | null
           hotels?: Json | null
           id?: string
           origin?: string
