@@ -8,7 +8,7 @@ import LoadingIndicator from '../components/LoadingIndicator';
 import { TravelPlan, Hotel, Flight, DayPlan } from '../types';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MapPin, Calendar, DollarSign, ArrowRight } from 'lucide-react';
+import { MapPin, Calendar, ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import Image from '@/components/ui/image';
 import AnimatedBackground from '../components/AnimatedBackground';
 import { formatDate } from '@/lib/utils';
@@ -19,7 +19,7 @@ interface DbTravelPlan {
   id: string;
   user_id: string;
   destination: string;
-  source: string;
+  origin: string;
   start_date: string;
   end_date: string;
   duration: number;
@@ -74,6 +74,9 @@ const AllTrips = () => {
   const [error, setError] = useState<string | null>(null);
   const [destinationImages, setDestinationImages] = useState<Record<string, string>>({});
   const [loadingImages, setLoadingImages] = useState<Record<string, boolean>>({});
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const tripsPerPage = 9;
 
   // Clean up blob URLs when component unmounts
   useEffect(() => {
@@ -216,6 +219,35 @@ const AllTrips = () => {
     return destinationImages[destination] || '/placeholder.svg';
   };
 
+  // Calculate pagination values
+  const indexOfLastTrip = currentPage * tripsPerPage;
+  const indexOfFirstTrip = indexOfLastTrip - tripsPerPage;
+  const currentTrips = travelPlans.slice(indexOfFirstTrip, indexOfLastTrip);
+  const totalPages = Math.ceil(travelPlans.length / tripsPerPage);
+
+  // Change page
+  const goToPage = (pageNumber: number) => {
+    setCurrentPage(pageNumber);
+    // Scroll to top of trips section
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Previous page
+  const goToPreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  // Next page
+  const goToNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col">
@@ -270,53 +302,93 @@ const AllTrips = () => {
             </Button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {travelPlans.map((plan) => (
-              <Card key={plan.id} className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 bg-white bg-opacity-90 flex flex-col">
-                <div className="h-48 overflow-hidden relative">
-                  <Image
-                    src={getDestinationImageUrl(plan.destination)}
-                    alt={plan.destination}
-                    className="w-full h-full object-cover"
-                    onError={() => console.log(`Failed to load image for ${plan.destination}`)}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end">
-                    <h2 className="text-white text-xl font-bold px-4 pb-3">{plan.destination}</h2>
-                  </div>
-                </div>
-                
-                <CardContent className="flex-grow p-4">
-                  <div className="space-y-2">
-                    <div className="flex items-center text-gray-700">
-                      <MapPin className="w-4 h-4 mr-2" />
-                      <span>From: {plan.source}</span>
-                    </div>
-                    
-                    <div className="flex items-center text-gray-700">
-                      <Calendar className="w-4 h-4 mr-2" />
-                      <span>{plan.duration || 0} days ({formatDate(plan.start_date)} - {formatDate(plan.end_date)})</span>
-                    </div>
-                    
-                    <div className="flex items-center text-gray-700">
-                      <DollarSign className="w-4 h-4 mr-2" />
-                      <span>Budget: ${plan.total_budget || 0}</span>
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {currentTrips.map((plan) => (
+                <Card key={plan.id} className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 bg-white bg-opacity-90 flex flex-col">
+                  <div className="h-48 overflow-hidden relative">
+                    <Image
+                      src={getDestinationImageUrl(plan.destination)}
+                      alt={plan.destination}
+                      className="w-full h-full object-cover"
+                      onError={() => console.log(`Failed to load image for ${plan.destination}`)}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end">
+                      <h2 className="text-white text-xl font-bold px-4 pb-3">{plan.destination}</h2>
                     </div>
                   </div>
                   
-                  <p className="mt-4 text-gray-600 line-clamp-3">{plan.summary}</p>
-                </CardContent>
+                  <CardContent className="flex-grow p-4">
+                    <div className="space-y-2">
+                      <div className="flex items-center text-gray-700">
+                        <MapPin className="w-4 h-4 mr-2" />
+                        <span className="font-bold">From: {plan.origin}</span>
+                      </div>
+                      
+                      <div className="flex items-center text-gray-700">
+                        <Calendar className="w-4 h-4 mr-2" />
+                        <span className="font-bold">{plan.duration || 0} days ({formatDate(plan.start_date)} - {formatDate(plan.end_date)})</span>
+                      </div>
+                      
+                      <div className="flex items-center text-gray-700">
+                        <span className="font-bold ml-6">Budget: ${plan.total_budget || 0}</span>
+                      </div>
+                    </div>
+                    
+                    <p className="mt-4 text-gray-600 line-clamp-3">{plan.summary}</p>
+                  </CardContent>
+                  
+                  <CardFooter className="p-4 pt-0">
+                    <Button 
+                      className="w-full flex items-center justify-center" 
+                      onClick={() => handleViewTrip(plan.id)}
+                    >
+                      View Trip Details <ArrowRight className="ml-2 w-4 h-4" />
+                    </Button>
+                  </CardFooter>
+                </Card>
+              ))}
+            </div>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="flex justify-center items-center mt-8 space-x-2">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={goToPreviousPage} 
+                  disabled={currentPage === 1}
+                  className="flex items-center px-2"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
                 
-                <CardFooter className="p-4 pt-0">
-                  <Button 
-                    className="w-full flex items-center justify-center" 
-                    onClick={() => handleViewTrip(plan.id)}
-                  >
-                    View Trip Details <ArrowRight className="ml-2 w-4 h-4" />
-                  </Button>
-                </CardFooter>
-              </Card>
-            ))}
-          </div>
+                <div className="flex space-x-1">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(number => (
+                    <Button
+                      key={number}
+                      variant={currentPage === number ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => goToPage(number)}
+                      className="w-8 h-8 p-0"
+                    >
+                      {number}
+                    </Button>
+                  ))}
+                </div>
+                
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={goToNextPage} 
+                  disabled={currentPage === totalPages}
+                  className="flex items-center px-2"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+          </>
         )}
       </main>
       
