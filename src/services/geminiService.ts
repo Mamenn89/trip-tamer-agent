@@ -1,6 +1,5 @@
 import { TravelFormData, TravelPlan } from '../types';
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { saveTravelPlan } from './supabaseService';
 import { useAuth } from '../contexts/AuthContext';
 
 // Get API key from Vite environment variables
@@ -155,7 +154,7 @@ Important: Respond ONLY with a valid JSON object. Do not include any text before
     jsonString = jsonString
       .replace(/^[^{]*/, '') // Remove anything before first {
       .replace(/[^}]*$/, '') // Remove anything after last }
-      .replace(/[\u0000-\u0019]+/g, '') // Remove control characters
+      .replace(/[^\x20-\x7E]+/g, '') // Replace control and non-printable characters
       .replace(/\\[rnt]/g, '') // Remove escaped whitespace
       .replace(/,(\s*[}\]])/g, '$1') // Remove trailing commas
       .trim();
@@ -201,6 +200,7 @@ Important: Respond ONLY with a valid JSON object. Do not include any text before
       endDate: formData.endDate,
       duration,
       totalBudget: formData.budget,
+      travelers: formData.travelers, // Add the missing travelers property
       summary: travelPlanData.summary || `${duration} day trip to ${formData.destination}`,
       hotels: travelPlanData.hotels?.map(hotel => ({
         name: hotel.name,
@@ -258,18 +258,8 @@ Important: Respond ONLY with a valid JSON object. Do not include any text before
       throw new Error('Generated travel plan is missing required data');
     }
 
-    // Save to Supabase
-    if (formData.userId) {
-      console.log('Saving travel plan to Supabase...');
-      try {
-        await saveTravelPlan(formData.userId, travelPlan);
-        console.log('Travel plan saved successfully');
-      } catch (dbError) {
-        console.error('Failed to save travel plan:', dbError);
-        throw new Error('Failed to save travel plan to database');
-      }
-    }
-
+    // Remove this duplicate save - it's already being saved in Planner.tsx
+    
     return travelPlan;
   } catch (error) {
     console.error('Error in travel plan generation:', error);

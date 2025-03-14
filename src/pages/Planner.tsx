@@ -6,17 +6,16 @@ import NavBar from '../components/NavBar';
 import Footer from '../components/Footer';
 import LoadingIndicator from '../components/LoadingIndicator';
 import PlannerForm from '../components/PlannerForm';
-import TravelPlanMarkdown from '../components/TravelPlanMarkdown';
-import { TravelFormData, TravelPlan } from '../types';
+import { TravelFormData } from '../types';
 import { useGenerateAITravelPlan } from '../hooks/useGenerateAITravelPlan';
 import { saveTravelPlan } from '../services/supabaseService';
 
 const Planner = () => {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
-  const [travelPlan, setTravelPlan] = useState<TravelPlan | null>(null);
   const { generatePlan, loading, error } = useGenerateAITravelPlan();
   const [formError, setFormError] = useState<string | null>(null);
+  const [hasSaved, setHasSaved] = useState(false);
 
   useEffect(() => {
     // Log component mount and initial state
@@ -46,42 +45,32 @@ const Planner = () => {
       console.log('Submitting plan with user data:', { userId: currentUser?.id });
       const plan = await generatePlan(formDataWithUser);
       console.log('Travel plan generated:', plan);
-      setTravelPlan(plan);
 
       // Save to Supabase and navigate to view trip page
-      if (currentUser?.id) {
+      if (currentUser?.id && !hasSaved) {
         try {
           const savedData = await saveTravelPlan(currentUser.id, plan);
           if (savedData && savedData[0]?.id) {
-            // Navigate to the view trip page
+            // Immediately navigate to the view trip page
             navigate(`/viewtrip/${savedData[0].id}`);
+            setHasSaved(true);
+            return; // Exit the function after navigation to prevent any further processing
           }
         } catch (dbError) {
           console.error('Failed to save travel plan to database:', dbError);
           setFormError('Failed to save travel plan. Please try again.');
         }
       }
-      
-      // Scroll to results if navigation fails
-      setTimeout(() => {
-        const resultsElement = document.getElementById('results');
-        if (resultsElement) {
-          resultsElement.scrollIntoView({ behavior: 'smooth' });
-        } else {
-          console.warn('Results element not found');
-        }
-      }, 100);
     } catch (err) {
       console.error('Error in handleSubmit:', err);
       setFormError(err instanceof Error ? err.message : 'An unexpected error occurred');
+      setHasSaved(false);
     }
   };
 
   const handleStartOver = () => {
-    setTravelPlan(null);
     setFormError(null);
-    // Scroll back to the top or to the form
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setHasSaved(false);
   };
 
   if (!currentUser) {
@@ -108,17 +97,15 @@ const Planner = () => {
           </p>
         </div>
         
-        {!travelPlan && (
-          <div className="max-w-4xl mx-auto my-12">
-            {formError && (
-              <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-                <p className="text-red-600">{formError}</p>
-              </div>
-            )}
-            
-            <PlannerForm onSubmit={handleSubmit} loading={loading} />
-          </div>
-        )}
+        <div className="max-w-4xl mx-auto my-12">
+          {formError && (
+            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-red-600">{formError}</p>
+            </div>
+          )}
+          
+          <PlannerForm onSubmit={handleSubmit} loading={loading} />
+        </div>
 
         {loading && (
           <div className="my-12 text-center">
@@ -139,12 +126,6 @@ const Planner = () => {
             >
               Try Again
             </button>
-          </div>
-        )}
-
-        {travelPlan && !loading && !error && (
-          <div id="results" className="my-12 scroll-mt-24">
-            <TravelPlanMarkdown plan={travelPlan} onStartOver={handleStartOver} />
           </div>
         )}
       </main>

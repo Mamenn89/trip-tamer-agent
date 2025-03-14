@@ -8,14 +8,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import NavBar from '../components/NavBar';
 import Footer from '../components/Footer';
 import AnimatedBackground from '../components/AnimatedBackground';
-import { Mail, Lock, UserPlus, LogIn, Chrome } from 'lucide-react';
-import AppleIcon from '@/components/icons/AppleIcon';
+import { Mail, Lock, UserPlus, LogIn, Chrome, CheckCircle } from 'lucide-react';
 import { Provider } from '@supabase/supabase-js';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [signupSuccess, setSignupSuccess] = useState(false);
+  const [signupEmail, setSignupEmail] = useState('');
   const { login, signup, signInWithOAuth, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -68,13 +69,15 @@ const Login = () => {
       await signup(email, password);
       toast({
         title: 'Signup successful',
-        description: 'Welcome to Dika Travel Mate!',
+        description: 'Please check your email for a confirmation link.',
         duration: 3000,
       });
       
-      // Redirect to the planner page using the correct base URL
-      const redirectUrl = getRedirectUrl();
-      window.location.href = `${redirectUrl}/planner`;
+      setSignupSuccess(true);
+      setSignupEmail(email);
+      setEmail('');
+      setPassword('');
+      setIsSubmitting(false);
     } catch (error) {
       toast({
         title: 'Signup failed',
@@ -104,12 +107,35 @@ const Login = () => {
 
   return (
     <div className="relative min-h-screen">
+
       <AnimatedBackground />
       <NavBar />
 
       <main className="container mx-auto px-4 py-20">
-        <div className="max-w-md mx-auto glass-panel rounded-xl p-8 shadow-lg">
-          <Tabs defaultValue="login" className="w-full">
+        {signupSuccess ? (
+          <div className="max-w-md mx-auto text-center space-y-6 glass-panel backdrop-blur-md bg-blue-900/70 p-8 rounded-xl text-white shadow-lg">
+            <div className="flex justify-center">
+              <CheckCircle className="w-16 h-16 text-white" />
+            </div>
+            <h2 className="text-2xl font-bold">Thank You for Registering!</h2>
+            <p className="text-white/90">
+              We've sent a confirmation link to <span className="font-medium underline">{signupEmail}</span>.
+              Please check your email and click the link to verify your account.
+            </p>
+            <p className="text-white/80 text-sm">
+              If you don't see the email, please check your spam folder.
+            </p>
+            <Button 
+              className="mt-4 backdrop-blur-sm bg-transparent border border-white/50 hover:bg-white/10 text-white"
+              onClick={() => {
+                setSignupSuccess(false);
+              }}
+            >
+              Return to Login
+            </Button>
+          </div>
+        ) : (
+          <Tabs defaultValue="login" className="max-w-md mx-auto backdrop-blur-md bg-transparent rounded-xl p-8 shadow-lg border border-white/10">
             <TabsList className="grid w-full grid-cols-2 mb-6">
               <TabsTrigger value="login">Login</TabsTrigger>
               <TabsTrigger value="signup">Sign Up</TabsTrigger>
@@ -175,26 +201,16 @@ const Login = () => {
                   </div>
                 </div>
                 
-                <div className="mt-6 grid grid-cols-2 gap-3">
+                <div className="mt-6">
                   <Button 
                     type="button" 
                     variant="outline"
                     onClick={() => handleOAuthLogin('google')}
                     disabled={isSubmitting}
-                    className="inline-flex justify-center items-center"
+                    className="w-full inline-flex justify-center items-center"
                   >
                     <Chrome className="w-5 h-5 mr-2" />
                     Google
-                  </Button>
-                  <Button 
-                    type="button" 
-                    variant="outline"
-                    onClick={() => handleOAuthLogin('apple')}
-                    disabled={isSubmitting}
-                    className="inline-flex justify-center items-center"
-                  >
-                    <AppleIcon className="w-5 h-5 mr-2" />
-                    Apple
                   </Button>
                 </div>
               </div>
@@ -262,40 +278,22 @@ const Login = () => {
                   </div>
                 </div>
                 
-                <div className="mt-6 grid grid-cols-2 gap-3">
+                <div className="mt-6">
                   <Button 
                     type="button" 
                     variant="outline"
                     onClick={() => handleOAuthLogin('google')}
                     disabled={isSubmitting}
-                    className="inline-flex justify-center items-center"
+                    className="w-full inline-flex justify-center items-center"
                   >
                     <Chrome className="w-5 h-5 mr-2" />
                     Google
-                  </Button>
-                  <Button 
-                    type="button" 
-                    variant="outline"
-                    onClick={() => handleOAuthLogin('apple')}
-                    disabled={isSubmitting}
-                    className="inline-flex justify-center items-center"
-                  >
-                    <AppleIcon className="w-5 h-5 mr-2" />
-                    Apple
                   </Button>
                 </div>
               </div>
             </TabsContent>
           </Tabs>
-
-          <div className="mt-6 text-center text-sm">
-            <p className="text-gray-600">
-              <Link to="/" className="text-blue-600 hover:underline">
-                Back to home
-              </Link>
-            </p>
-          </div>
-        </div>
+        )}
       </main>
 
       <Footer />
