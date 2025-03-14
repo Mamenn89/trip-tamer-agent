@@ -76,10 +76,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signInWithOAuth = async (provider: Provider): Promise<void> => {
     try {
       setIsLoading(true);
+      // Get the current URL or use the production URL if available
+      const redirectUrl = import.meta.env.VITE_REDIRECT_URL || window.location.origin;
+      
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${window.location.origin}/planner`,
+          redirectTo: `${redirectUrl}/planner`,
         },
       });
       
@@ -90,8 +93,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = async (): Promise<void> => {
-    const { error } = await supabase.auth.signOut();
-    if (error) throw error;
+    try {
+      setIsLoading(true);
+      // Check if there's a valid session before attempting to sign out
+      const { data } = await supabase.auth.getSession();
+      if (data.session) {
+        const { error } = await supabase.auth.signOut();
+        if (error) throw error;
+      } else {
+        // If no session exists, just update the local state
+        setCurrentUser(null);
+      }
+    } catch (error) {
+      console.error("Error during logout:", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const value = {
