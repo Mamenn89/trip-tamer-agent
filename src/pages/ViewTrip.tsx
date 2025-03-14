@@ -8,7 +8,7 @@ import Footer from '../components/Footer';
 import LoadingIndicator from '../components/LoadingIndicator';
 import { TravelPlan, Activity } from '../types';
 import { Card, CardContent } from '@/components/ui/card';
-import { MapPin, Calendar, DollarSign, Users } from 'lucide-react';
+import { MapPin, Calendar, DollarSign, Users, Plane, Hotel, Clock, Navigation, Star } from 'lucide-react';
 import Image from '@/components/ui/image';
 import { ActivityCard } from '../components/ActivityCard';
 import { googlePlacesService } from '../services/googlePlacesService';
@@ -57,56 +57,29 @@ const ViewTrip = () => {
   const { id } = useParams<{ id: string }>();
   const { currentUser } = useAuth();
   const [travelPlan, setTravelPlan] = useState<TravelPlan | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [destinationPhotos, setDestinationPhotos] = useState<any[]>([]);
-  const [heroImage, setHeroImage] = useState<string>('/placeholder.jpg');
-  const [loadingHeroImage, setLoadingHeroImage] = useState(true);
-  const [hotelPhotos, setHotelPhotos] = useState<Record<string, string>>({});
-  const [loadingHotelPhotos, setLoadingHotelPhotos] = useState<Record<string, boolean>>({});
+  const [loading, setLoading] = useState<boolean>(true);
+  const [heroImage, setHeroImage] = useState<string | null>(null);
+  const [loadingHeroImage, setLoadingHeroImage] = useState<boolean>(true);
   const [activityImages, setActivityImages] = useState<ActivityImage[]>([]);
-  const [loadingActivityImages, setLoadingActivityImages] = useState(true);
+  const [hotelImages, setHotelImages] = useState<Record<string, string>>({});
+  const [error, setError] = useState<string | null>(null);
 
-  // Cleanup function for blob URLs
-  useEffect(() => {
-    return () => {
-      // Cleanup hero image if it's a blob URL
-      if (heroImage.startsWith('blob:')) {
-        googlePlacesService.cleanupPhotoUrl(heroImage);
-      }
-    };
-  }, [heroImage]);
-
-  // Separate function to fetch destination photos
+  // Function to fetch destination photos from Google Places API
   const fetchDestinationPhotos = async (destination: string) => {
     try {
       setLoadingHeroImage(true);
-      console.log('Fetching photo for destination:', destination);
+      const photos = await googlePlacesService.searchPhotos(destination);
       
-      const photos = await googlePlacesService.getPlacePhotos(destination);
-      console.log('Found photos:', photos);
-      
-      if (!photos || photos.length === 0) {
-        console.log('No photos found, using placeholder');
-        setHeroImage('/placeholder.svg');
-        return;
-      }
-
-      // Just use the first photo
-      const firstPhoto = photos[0];
-      console.log('First photo object:', firstPhoto);
-      
-      if (firstPhoto?.url) {
-        console.log('Setting hero image to:', firstPhoto.url);
-        setHeroImage(firstPhoto.url);
+      if (photos && photos.length > 0) {
+        setHeroImage(photos[0].url);
       } else {
-        console.log('No valid photo URL found, using placeholder');
-        setHeroImage('/placeholder.svg');
+        // Set a default image if no photos are found
+        setHeroImage('/placeholders/destination.jpg');
       }
-      
     } catch (error) {
-      console.error('Error in fetchDestinationPhotos:', error);
-      setHeroImage('/placeholder.svg');
+      console.error('Error fetching destination photos:', error);
+      // Set a default image on error
+      setHeroImage('/placeholders/destination.jpg');
     } finally {
       setLoadingHeroImage(false);
     }
@@ -115,219 +88,196 @@ const ViewTrip = () => {
   // Function to fetch hotel photos from Google Places API
   const fetchHotelPhotos = async (hotels: any[]) => {
     if (!hotels || hotels.length === 0) return;
-    
-    console.log('Fetching photos for hotels:', hotels.map(h => h.name));
-    
-    // Initialize loading state for all hotels
-    const loadingState: Record<string, boolean> = {};
-    hotels.forEach(hotel => {
-      loadingState[hotel.name] = true;
-    });
-    setLoadingHotelPhotos(loadingState);
-    
-    // Process each hotel
-    const photoPromises = hotels.map(async (hotel) => {
-      try {
-        console.log('Fetching photo for hotel:', hotel.name);
-        const photoData = await googlePlacesService.getHotelPhoto(hotel.name);
-        
-        if (photoData?.url) {
-          console.log('Setting hotel image to:', photoData.url);
-          return { name: hotel.name, url: photoData.url };
-        } else {
-          console.log('No photo found for hotel:', hotel.name);
-          return { name: hotel.name, url: '/placeholder.svg' };
-        }
-      } catch (error) {
-        console.error(`Error fetching photo for hotel ${hotel.name}:`, error);
-        return { name: hotel.name, url: '/placeholder.svg' };
-      }
-    });
-    
-    // Wait for all photo fetches to complete
-    const results = await Promise.all(photoPromises);
-    
-    // Update the photos state
-    const newPhotos: Record<string, string> = {};
-    results.forEach(result => {
-      newPhotos[result.name] = result.url;
-    });
-    
-    console.log('All hotel photos fetched:', newPhotos);
-    setHotelPhotos(newPhotos);
-    
-    // Set loading to false for all hotels
-    const newLoadingState: Record<string, boolean> = {};
-    hotels.forEach(hotel => {
-      newLoadingState[hotel.name] = false;
-    });
-    setLoadingHotelPhotos(newLoadingState);
+
+    const hotelImagesMap: Record<string, string> = {};
+
+    try {
+      // Fetch photos for each hotel in parallel
+      await Promise.all(
+        hotels.map(async (hotel) => {
+          if (!hotel.name) return;
+
+          try {
+            const photos = await googlePlacesService.searchPhotos(hotel.name);
+            
+            if (photos && photos.length > 0) {
+              hotelImagesMap[hotel.name] = photos[0].url;
+            } else {
+              // Set a default image if no photos are found
+              hotelImagesMap[hotel.name] = '/placeholders/hotel.jpg';
+            }
+          } catch (error) {
+            console.error(`Error fetching photos for hotel ${hotel.name}:`, error);
+            // Set a default image on error
+            hotelImagesMap[hotel.name] = '/placeholders/hotel.jpg';
+          }
+        })
+      );
+
+      setHotelImages(hotelImagesMap);
+    } catch (error) {
+      console.error('Error fetching hotel photos:', error);
+    }
   };
 
   // Function to fetch activity images from Google Places API
   const fetchActivityImages = async (dayPlans: any[]) => {
     if (!dayPlans || dayPlans.length === 0) return;
-    
-    console.log('Fetching images for activities');
-    setLoadingActivityImages(true);
-    
-    const imagePromises: Promise<ActivityImage | null>[] = [];
-    
-    // For each day
-    dayPlans.forEach((day, dayIndex) => {
-      if (!day.places) return;
-      
-      // For each place in the day
-      day.places.forEach((place: any, placeIndex: number) => {
-        const details = typeof place.details === 'object' ? place.details : null;
-        if (!details) return;
+
+    const activityImagesArray: ActivityImage[] = [];
+
+    try {
+      // Process each day's activities
+      for (let dayIndex = 0; dayIndex < dayPlans.length; dayIndex++) {
+        const day = dayPlans[dayIndex];
         
-        // Handle each time of day activity
-        const timeSlots = [
-          { key: 'early_morning', label: 'Early Morning' },
-          { key: 'morning', label: 'Morning' },
-          { key: 'afternoon', label: 'Afternoon' },
-          { key: 'evening', label: 'Evening' },
-          { key: 'night', label: 'Night' }
-        ];
-        
-        timeSlots.forEach(slot => {
-          const activity = details[slot.key];
-          if (!activity) return;
+        if (!day.places || day.places.length === 0) continue;
+
+        // Process each place in the day plan
+        for (const place of day.places) {
+          // Handle different data structures (nested vs. flat)
+          let details: any;
           
-          // Create a promise to fetch an image for this activity
-          const promise = (async () => {
+          if (typeof place.details === 'object') {
+            details = place.details;
+          } else {
+            details = place; // Flat structure
+          }
+
+          // Process each time slot in the place
+          const timeSlots = ['early_morning', 'morning', 'afternoon', 'evening', 'night'];
+          
+          for (const slot of timeSlots) {
+            const activity = details[slot];
+            
+            if (!activity || !activity.place_name) continue;
+
             try {
-              console.log(`Fetching image for ${slot.label} activity: ${activity.place_name}`);
-              const photoData = await googlePlacesService.getPlacePhotos(activity.place_name);
+              const photos = await googlePlacesService.searchPhotos(activity.place_name);
               
-              if (photoData && photoData.length > 0 && photoData[0].url) {
-                console.log(`Found image for ${activity.place_name}:`, photoData[0].url);
-                return {
+              if (photos && photos.length > 0) {
+                activityImagesArray.push({
                   activityName: activity.place_name,
-                  timeOfDay: slot.key,
+                  timeOfDay: slot,
                   dayIndex,
-                  url: photoData[0].url
-                };
+                  url: photos[0].url
+                });
+              } else {
+                // Set a default image if no photos are found
+                activityImagesArray.push({
+                  activityName: activity.place_name,
+                  timeOfDay: slot,
+                  dayIndex,
+                  url: '/placeholders/activity.jpg'
+                });
               }
-              return null;
             } catch (error) {
-              console.error(`Error fetching image for ${activity.place_name}:`, error);
-              return null;
+              console.error(`Error fetching photos for activity ${activity.place_name}:`, error);
+              // Set a default image on error
+              activityImagesArray.push({
+                activityName: activity.place_name,
+                timeOfDay: slot,
+                dayIndex,
+                url: '/placeholders/activity.jpg'
+              });
             }
-          })();
-          
-          imagePromises.push(promise);
-        });
-      });
-    });
-    
-    // Wait for all image fetches to complete
-    const results = await Promise.all(imagePromises);
-    
-    // Filter out null results and update state
-    const validImages = results.filter((img): img is ActivityImage => img !== null);
-    console.log('Fetched activity images:', validImages);
-    setActivityImages(validImages);
-    setLoadingActivityImages(false);
+          }
+        }
+      }
+
+      setActivityImages(activityImagesArray);
+    } catch (error) {
+      console.error('Error fetching activity images:', error);
+    }
   };
 
   // Helper function to get activity image URL
   const getActivityImageUrl = (activityName: string, timeOfDay: string, dayIndex: number) => {
-    const imageEntry = activityImages.find(
-      img => img.activityName === activityName && 
-             img.timeOfDay === timeOfDay && 
-             img.dayIndex === dayIndex
+    const image = activityImages.find(
+      img => img.activityName === activityName && img.timeOfDay === timeOfDay && img.dayIndex === dayIndex
     );
-    return imageEntry?.url || '/placeholder.svg';
+    
+    return image ? image.url : '/placeholders/activity.jpg';
   };
 
   useEffect(() => {
     const fetchTripDetails = async () => {
       try {
-        if (!id) {
-          throw new Error('Trip ID is required');
+        setLoading(true);
+        
+        if (!id || !currentUser) {
+          setError('Trip ID or user information not available');
+          setLoading(false);
+          return;
         }
 
-        const { data, error } = await supabase
+        // Fetch travel plan from Supabase
+        const { data, error: supabaseError } = await supabase
           .from('travel_plans')
           .select('*')
           .eq('id', id)
           .single();
 
-        if (error) {
-          throw error;
+        if (supabaseError) {
+          console.error('Error fetching travel plan:', supabaseError);
+          setError('Failed to load travel plan details');
+          setLoading(false);
+          return;
         }
 
         if (!data) {
-          throw new Error('Trip not found');
+          setError('Travel plan not found');
+          setLoading(false);
+          return;
         }
 
-        console.log('Received trip data:', data);
+        // Check if the travel plan belongs to the current user
+        if (data.user_id !== currentUser.id) {
+          setError('You do not have permission to view this travel plan');
+          setLoading(false);
+          return;
+        }
 
-        // Convert database format to TravelPlan format
-        const plan: TravelPlan = {
-          id: data.id,
-          userId: data.user_id,
-          destination: data.destination,
-          source: data.origin,
-          startDate: data.start_date,
-          endDate: data.end_date,
-          duration: data.duration,
-          totalBudget: data.total_budget,
-          summary: data.summary,
-          hotels: data.hotels || [],
-          flights: Array.isArray(data.flights) ? data.flights : 
-            (data.flight ? [data.flight] : []),
-          dayPlans: Array.isArray(data.day_plans) ? data.day_plans.map((day: any) => ({
-            date: day.date,
-            places: Array.isArray(day.places) ? day.places.map((place: any) => ({
-              name: place.name || '',
-              details: typeof place.details === 'object' ? {
-                early_morning: place.details.early_morning || null,
-                morning: place.details.morning || null,
-                afternoon: place.details.afternoon || null,
-                evening: place.details.evening || null,
-                night: place.details.night || null
-              } : (place.details || ''),
-              imageUrl: place.imageUrl || '',
-              coordinates: {
-                lat: place.coordinates?.lat || 0,
-                lng: place.coordinates?.lng || 0
-              },
-              ticketPrice: place.ticketPrice || 0,
-              rating: place.rating || 0,
-              bestTimeToVisit: place.bestTimeToVisit || ''
-            })) : []
-          })) : [],
-          tips: data.tips || [],
+        // Parse JSON fields if they're stored as strings
+        let parsedData = {
+          ...data,
+          hotels: typeof data.hotels === 'string' ? JSON.parse(data.hotels) : data.hotels,
+          flights: typeof data.flights === 'string' ? JSON.parse(data.flights) : data.flights,
+          dayPlans: typeof data.day_plans === 'string' ? JSON.parse(data.day_plans) : data.day_plans,
+          tips: typeof data.tips === 'string' ? JSON.parse(data.tips) : data.tips,
         };
 
-        console.log('Transformed travel plan:', plan);
-        setTravelPlan(plan);
+        // Format and normalize data
+        const formattedTravelPlan: TravelPlan = {
+          id: parsedData.id,
+          userId: parsedData.user_id,
+          destination: parsedData.destination,
+          source: parsedData.source,
+          startDate: parsedData.start_date,
+          endDate: parsedData.end_date,
+          duration: parsedData.duration,
+          totalBudget: parsedData.total_budget,
+          summary: parsedData.summary,
+          hotels: parsedData.hotels || [],
+          flights: parsedData.flights || [],
+          dayPlans: parsedData.dayPlans || [],
+          tips: parsedData.tips || [],
+        };
 
-        // Fetch photos for the destination
-        if (plan.destination) {
-          console.log('Starting photo fetch for:', plan.destination);
-          await fetchDestinationPhotos(plan.destination);
-        } else {
-          console.log('No destination found in plan');
-          setLoadingHeroImage(false);
-        }
+        setTravelPlan(formattedTravelPlan);
+
+        // Fetch destination photos
+        await fetchDestinationPhotos(formattedTravelPlan.destination);
 
         // Fetch hotel photos
-        if (plan.hotels && plan.hotels.length > 0) {
-          await fetchHotelPhotos(plan.hotels);
-        }
+        await fetchHotelPhotos(formattedTravelPlan.hotels);
 
         // Fetch activity images
-        if (plan.dayPlans && plan.dayPlans.length > 0) {
-          await fetchActivityImages(plan.dayPlans);
-        }
-      } catch (err) {
-        console.error('Error fetching trip details:', err);
-        setError(err instanceof Error ? err.message : 'Failed to load trip details');
-        setLoadingHeroImage(false);
+        await fetchActivityImages(formattedTravelPlan.dayPlans);
+
+      } catch (error) {
+        console.error('Error in fetchTripDetails:', error);
+        setError('An unexpected error occurred while loading trip details');
       } finally {
         setLoading(false);
       }
@@ -338,7 +288,7 @@ const ViewTrip = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="flex justify-center items-center min-h-screen">
         <LoadingIndicator />
       </div>
     );
@@ -346,22 +296,22 @@ const ViewTrip = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Error</h1>
-          <p className="text-gray-600">{error}</p>
-        </div>
+      <div className="flex flex-col justify-center items-center min-h-screen">
+        <p className="text-red-500 mb-4">{error}</p>
+        <button 
+          onClick={() => window.history.back()} 
+          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+        >
+          Go Back
+        </button>
       </div>
     );
   }
 
   if (!travelPlan) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Trip Not Found</h1>
-          <p className="text-gray-600">The requested trip could not be found.</p>
-        </div>
+      <div className="flex justify-center items-center min-h-screen">
+        <p>Travel plan not found</p>
       </div>
     );
   }
@@ -379,84 +329,67 @@ const ViewTrip = () => {
               <LoadingIndicator />
             </div>
           ) : (
-            <>
-              <div className="w-full h-full">
-                <Image
-                  src={heroImage}
-                  alt={travelPlan?.destination || 'Destination'}
-                  className="w-full h-full object-cover"
-                  onLoad={() => {
-                    console.log('Hero image loaded successfully:', heroImage);
-                  }}
-                  onError={() => {
-                    console.error('Hero image failed to load:', heroImage);
-                    setHeroImage('/placeholder.svg');
-                  }}
-                />
-              </div>
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-black/20" />
-              <div className="absolute bottom-0 left-0 p-12 text-white">
-                <h1 className="text-6xl font-bold mb-6">{travelPlan?.destination}</h1>
-                <div className="flex items-center gap-8 text-lg">
-                  <div className="flex items-center gap-2">
-                    <Calendar className="w-5 h-5" />
-                    {travelPlan?.startDate && new Date(travelPlan.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - {travelPlan?.endDate && new Date(travelPlan.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Calendar className="w-5 h-5" />
-                    {travelPlan?.duration} days
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Users className="w-5 h-5" />
-                    2 travelers
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <DollarSign className="w-5 h-5" />
-                    Budget: ${travelPlan?.totalBudget}
-                  </div>
-                </div>
-              </div>
-            </>
+            <Image
+              src={heroImage || '/placeholders/destination.jpg'}
+              alt={travelPlan.destination}
+              className="w-full h-full object-cover"
+              width={1920}
+              height={400}
+            />
           )}
+          <div className="absolute inset-0 bg-black/50 flex flex-col justify-center items-center text-white p-8">
+            <h1 className="text-4xl md:text-5xl font-bold mb-4 text-center">
+              {travelPlan.destination}
+            </h1>
+            <p className="text-xl max-w-2xl text-center">
+              {travelPlan.summary}
+            </p>
+          </div>
         </div>
 
-        {/* Trip Info Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <Card>
-            <CardContent className="flex items-center p-4">
-              <MapPin className="w-5 h-5 mr-2 text-blue-500" />
-              <div>
-                <p className="text-sm text-gray-500">From</p>
-                <p className="font-medium">{travelPlan.source}</p>
+        {/* Trip Details */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+          <Card className="shadow-md">
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <MapPin className="mr-4 h-6 w-6 text-primary" />
+                <div>
+                  <p className="text-sm text-muted-foreground">From</p>
+                  <p className="font-medium">{travelPlan.source}</p>
+                </div>
               </div>
             </CardContent>
           </Card>
-          <Card>
-            <CardContent className="flex items-center p-4">
-              <Calendar className="w-5 h-5 mr-2 text-blue-500" />
-              <div>
-                <p className="text-sm text-gray-500">Start & End Date</p>
-                <p className="font-medium">
-                  {new Date(travelPlan.startDate).toLocaleDateString()} - {new Date(travelPlan.endDate).toLocaleDateString()}
-                </p>
+          <Card className="shadow-md">
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <Calendar className="mr-4 h-6 w-6 text-primary" />
+                <div>
+                  <p className="text-sm text-muted-foreground">Duration</p>
+                  <p className="font-medium">{travelPlan.duration} Days</p>
+                </div>
               </div>
             </CardContent>
           </Card>
-          <Card>
-            <CardContent className="flex items-center p-4">
-              <DollarSign className="w-5 h-5 mr-2 text-blue-500" />
-              <div>
-                <p className="text-sm text-gray-500">Budget</p>
-                <p className="font-medium">${travelPlan.totalBudget}</p>
+          <Card className="shadow-md">
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <DollarSign className="mr-4 h-6 w-6 text-primary" />
+                <div>
+                  <p className="text-sm text-muted-foreground">Budget</p>
+                  <p className="font-medium">${travelPlan.totalBudget}</p>
+                </div>
               </div>
             </CardContent>
           </Card>
-          <Card>
-            <CardContent className="flex items-center p-4">
-              <Users className="w-5 h-5 mr-2 text-blue-500" />
-              <div>
-                <p className="text-sm text-gray-500">Duration</p>
-                <p className="font-medium">{travelPlan.duration} days</p>
+          <Card className="shadow-md">
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <Users className="mr-4 h-6 w-6 text-primary" />
+                <div>
+                  <p className="text-sm text-muted-foreground">Travellers</p>
+                  <p className="font-medium">Not specified</p>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -469,70 +402,55 @@ const ViewTrip = () => {
             {travelPlan.hotels?.map((hotel, index) => (
               <Card key={index} className="overflow-hidden transition-all duration-300 hover:scale-105 cursor-pointer">
                 <div className="relative h-48">
-                  {loadingHotelPhotos[hotel.name] ? (
-                    <div className="w-full h-full flex items-center justify-center bg-gray-100">
-                      <LoadingIndicator />
-                    </div>
-                  ) : (
-                    <Image
-                      src={hotelPhotos[hotel.name] || '/placeholder.svg'}
-                      alt={hotel.name}
-                      className="w-full h-full object-cover"
-                      onLoad={() => {
-                        console.log('Hotel image loaded successfully:', hotel.name);
-                        setLoadingHotelPhotos(prev => ({ ...prev, [hotel.name]: false }));
-                      }}
-                      onError={() => {
-                        console.error('Hotel image failed to load:', hotel.name);
-                        setHotelPhotos(prev => ({ ...prev, [hotel.name]: '/placeholder.svg' }));
-                        setLoadingHotelPhotos(prev => ({ ...prev, [hotel.name]: false }));
-                      }}
-                    />
-                  )}
+                  <Image
+                    src={hotelImages[hotel.name] || '/placeholders/hotel.jpg'}
+                    alt={hotel.name}
+                    className="w-full h-full object-cover"
+                    width={400}
+                    height={200}
+                  />
                 </div>
                 <CardContent className="p-4">
-                  <h3 className="font-semibold mb-2">{hotel.name}</h3>
-                  <p className="text-sm text-gray-600 mb-2">{hotel.address}</p>
-                  <p className="font-medium">${hotel.price} / night</p>
+                  <h3 className="text-lg font-semibold mb-2">{hotel.name}</h3>
+                  <div className="flex items-center mb-2">
+                    <Star className="h-4 w-4 text-yellow-400 mr-1" />
+                    <p className="text-sm">{hotel.rating || 'N/A'}</p>
+                  </div>
+                  <p className="text-sm text-gray-600 mb-2">{hotel.location || 'Location not specified'}</p>
+                  <p className="font-medium">${hotel.price_per_night}/night</p>
                 </CardContent>
               </Card>
             ))}
           </div>
         </section>
 
-        {/* Flight Recommendations */}
+        {/* Flight Information */}
         <section className="mb-8">
-          <h2 className="text-2xl font-semibold mb-6">Flight Recommendations</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <h2 className="text-2xl font-semibold mb-6">Flight Information</h2>
+          <div className="grid grid-cols-1 gap-6">
             {travelPlan.flights?.map((flight, index) => (
-              <Card key={index} className="transition-all duration-300 hover:scale-105 cursor-pointer">
-                <CardContent className="p-4">
-                  <div className="flex flex-col space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4">
-                        <Image
-                          src={flight.airlineLogoUrl}
-                          alt={flight.airlineName}
-                          className="w-12 h-12 object-contain"
-                        />
-                        <div>
-                          <p className="font-semibold">{flight.airlineName}</p>
-                          <p className="text-sm text-gray-600">Flight {flight.flightNumber}</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-semibold">{flight.flightTime}</p>
-                        <p className="text-sm text-gray-600">{flight.flightDuration}</p>
-                      </div>
+              <Card key={index}>
+                <CardContent className="p-6">
+                  <div className="flex justify-between items-center flex-wrap">
+                    <div className="mb-4 md:mb-0">
+                      <p className="text-sm text-muted-foreground">Airline</p>
+                      <p className="font-medium">{flight.airline}</p>
                     </div>
-                    <div className="flex justify-between items-center text-sm text-gray-600">
-                      <div>
-                        <p>From: {flight.departureAirport}</p>
-                        <p>To: {flight.arrivalAirport}</p>
-                      </div>
-                      <div className="text-right">
-                        <p>Aircraft: {flight.airplaneType}</p>
-                      </div>
+                    <div className="mb-4 md:mb-0">
+                      <p className="text-sm text-muted-foreground">Flight Number</p>
+                      <p className="font-medium">{flight.flight_number || 'N/A'}</p>
+                    </div>
+                    <div className="mb-4 md:mb-0">
+                      <p className="text-sm text-muted-foreground">Departure</p>
+                      <p className="font-medium">{flight.departure_time || 'N/A'}</p>
+                    </div>
+                    <div className="mb-4 md:mb-0">
+                      <p className="text-sm text-muted-foreground">Arrival</p>
+                      <p className="font-medium">{flight.arrival_time || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Price</p>
+                      <p className="font-medium">${flight.price}</p>
                     </div>
                   </div>
                 </CardContent>
@@ -541,7 +459,7 @@ const ViewTrip = () => {
           </div>
         </section>
 
-        {/* Activities */}
+        {/* Daily Activities */}
         <section className="mb-16">
           <h2 className="text-2xl font-semibold mb-6">Activities</h2>
           <div className="space-y-8">
@@ -554,13 +472,13 @@ const ViewTrip = () => {
                     const details = typeof place.details === 'object' ? place.details : null;
                     
                     // Handle both nested and flat data structures
-                    const earlyMorningActivity = details?.early_morning || null;
-                    const morningActivity = details?.morning || null;
-                    const afternoonActivity = details?.afternoon || null;
-                    const eveningActivity = details?.evening || null;
-                    const nightActivity = details?.night || null;
+                    const earlyMorningActivity = details?.early_morning || place.early_morning;
+                    const morningActivity = details?.morning || place.morning;
+                    const afternoonActivity = details?.afternoon || place.afternoon;
+                    const eveningActivity = details?.evening || place.evening;
+                    const nightActivity = details?.night || place.night;
                     
-                    // If we have nested activities, render them directly in the grid
+                    // If we have time-based activities, render those
                     if (earlyMorningActivity || morningActivity || afternoonActivity || eveningActivity || nightActivity) {
                       return (
                         <div key={placeIndex} className="contents">
@@ -569,173 +487,152 @@ const ViewTrip = () => {
                               <div className="flex min-h-[12rem]">
                                 <div className="w-1/3 relative">
                                   <Image
-                                    src={getActivityImageUrl(earlyMorningActivity.place_name, 'early_morning', dayIndex) || earlyMorningActivity.place_image_url || '/placeholder.svg'}
+                                    src={getActivityImageUrl(earlyMorningActivity.place_name, 'early_morning', dayIndex)}
                                     alt={earlyMorningActivity.place_name}
-                                    className="absolute inset-0 w-full h-full object-cover"
+                                    className="h-full w-full object-cover"
+                                    width={200}
+                                    height={200}
                                   />
-                                </div>
-                                <CardContent className="p-4 flex-1">
-                                  <div>
-                                    <div className="flex justify-between items-start mb-2">
-                                      <div>
-                                        <span className="text-sm text-blue-600 block mb-1">Early Morning</span>
-                                        <h4 className="font-semibold">{earlyMorningActivity.place_name}</h4>
-                                      </div>
-                                      <div className="text-right">
-                                        {earlyMorningActivity.ticket_price > 0 && (
-                                          <p className="font-medium">${earlyMorningActivity.ticket_price}</p>
-                                        )}
-                                        {earlyMorningActivity.rating && (
-                                          <p className="text-sm text-gray-600">Rating: {earlyMorningActivity.rating}/5</p>
-                                        )}
-                                      </div>
-                                    </div>
-                                    <p className="text-sm text-gray-600 mb-2">{earlyMorningActivity.place_details}</p>
-                                    <p className="text-sm">
-                                      <span className="font-medium">Best time to visit:</span> {earlyMorningActivity.best_time_to_visit}
-                                    </p>
+                                  <div className="absolute top-0 left-0 bg-primary text-white px-2 py-1 text-xs">
+                                    Early Morning
                                   </div>
-                                </CardContent>
+                                </div>
+                                <div className="w-2/3 p-4">
+                                  <h4 className="font-semibold text-base mb-1">{earlyMorningActivity.place_name}</h4>
+                                  <p className="text-sm text-gray-600 mb-2 line-clamp-3">
+                                    {earlyMorningActivity.place_details}
+                                  </p>
+                                  <div className="flex items-center text-sm">
+                                    <DollarSign className="h-4 w-4 mr-1" />
+                                    <span className="mr-3">${earlyMorningActivity.ticket_price || 'Free'}</span>
+                                    <Clock className="h-4 w-4 mr-1" />
+                                    <span>{earlyMorningActivity.best_time_to_visit || 'Early Morning'}</span>
+                                  </div>
+                                </div>
                               </div>
                             </Card>
                           )}
+                          
                           {morningActivity && (
                             <Card className="overflow-hidden transition-all duration-300 hover:scale-105 cursor-pointer">
                               <div className="flex min-h-[12rem]">
                                 <div className="w-1/3 relative">
                                   <Image
-                                    src={getActivityImageUrl(morningActivity.place_name, 'morning', dayIndex) || morningActivity.place_image_url || '/placeholder.svg'}
+                                    src={getActivityImageUrl(morningActivity.place_name, 'morning', dayIndex)}
                                     alt={morningActivity.place_name}
-                                    className="absolute inset-0 w-full h-full object-cover"
+                                    className="h-full w-full object-cover"
+                                    width={200}
+                                    height={200}
                                   />
-                                </div>
-                                <CardContent className="p-4 flex-1">
-                                  <div>
-                                    <div className="flex justify-between items-start mb-2">
-                                      <div>
-                                        <span className="text-sm text-blue-600 block mb-1">Morning</span>
-                                        <h4 className="font-semibold">{morningActivity.place_name}</h4>
-                                      </div>
-                                      <div className="text-right">
-                                        {morningActivity.ticket_price > 0 && (
-                                          <p className="font-medium">${morningActivity.ticket_price}</p>
-                                        )}
-                                        {morningActivity.rating && (
-                                          <p className="text-sm text-gray-600">Rating: {morningActivity.rating}/5</p>
-                                        )}
-                                      </div>
-                                    </div>
-                                    <p className="text-sm text-gray-600 mb-2">{morningActivity.place_details}</p>
-                                    <p className="text-sm">
-                                      <span className="font-medium">Best time to visit:</span> {morningActivity.best_time_to_visit}
-                                    </p>
+                                  <div className="absolute top-0 left-0 bg-blue-500 text-white px-2 py-1 text-xs">
+                                    Morning
                                   </div>
-                                </CardContent>
+                                </div>
+                                <div className="w-2/3 p-4">
+                                  <h4 className="font-semibold text-base mb-1">{morningActivity.place_name}</h4>
+                                  <p className="text-sm text-gray-600 mb-2 line-clamp-3">
+                                    {morningActivity.place_details}
+                                  </p>
+                                  <div className="flex items-center text-sm">
+                                    <DollarSign className="h-4 w-4 mr-1" />
+                                    <span className="mr-3">${morningActivity.ticket_price || 'Free'}</span>
+                                    <Clock className="h-4 w-4 mr-1" />
+                                    <span>{morningActivity.best_time_to_visit || 'Morning'}</span>
+                                  </div>
+                                </div>
                               </div>
                             </Card>
                           )}
+                          
                           {afternoonActivity && (
                             <Card className="overflow-hidden transition-all duration-300 hover:scale-105 cursor-pointer">
                               <div className="flex min-h-[12rem]">
                                 <div className="w-1/3 relative">
                                   <Image
-                                    src={getActivityImageUrl(afternoonActivity.place_name, 'afternoon', dayIndex) || afternoonActivity.place_image_url || '/placeholder.svg'}
+                                    src={getActivityImageUrl(afternoonActivity.place_name, 'afternoon', dayIndex)}
                                     alt={afternoonActivity.place_name}
-                                    className="absolute inset-0 w-full h-full object-cover"
+                                    className="h-full w-full object-cover"
+                                    width={200}
+                                    height={200}
                                   />
-                                </div>
-                                <CardContent className="p-4 flex-1">
-                                  <div>
-                                    <div className="flex justify-between items-start mb-2">
-                                      <div>
-                                        <span className="text-sm text-blue-600 block mb-1">Afternoon</span>
-                                        <h4 className="font-semibold">{afternoonActivity.place_name}</h4>
-                                      </div>
-                                      <div className="text-right">
-                                        {afternoonActivity.ticket_price > 0 && (
-                                          <p className="font-medium">${afternoonActivity.ticket_price}</p>
-                                        )}
-                                        {afternoonActivity.rating && (
-                                          <p className="text-sm text-gray-600">Rating: {afternoonActivity.rating}/5</p>
-                                        )}
-                                      </div>
-                                    </div>
-                                    <p className="text-sm text-gray-600 mb-2">{afternoonActivity.place_details}</p>
-                                    <p className="text-sm">
-                                      <span className="font-medium">Best time to visit:</span> {afternoonActivity.best_time_to_visit}
-                                    </p>
+                                  <div className="absolute top-0 left-0 bg-orange-500 text-white px-2 py-1 text-xs">
+                                    Afternoon
                                   </div>
-                                </CardContent>
+                                </div>
+                                <div className="w-2/3 p-4">
+                                  <h4 className="font-semibold text-base mb-1">{afternoonActivity.place_name}</h4>
+                                  <p className="text-sm text-gray-600 mb-2 line-clamp-3">
+                                    {afternoonActivity.place_details}
+                                  </p>
+                                  <div className="flex items-center text-sm">
+                                    <DollarSign className="h-4 w-4 mr-1" />
+                                    <span className="mr-3">${afternoonActivity.ticket_price || 'Free'}</span>
+                                    <Clock className="h-4 w-4 mr-1" />
+                                    <span>{afternoonActivity.best_time_to_visit || 'Afternoon'}</span>
+                                  </div>
+                                </div>
                               </div>
                             </Card>
                           )}
+                          
                           {eveningActivity && (
                             <Card className="overflow-hidden transition-all duration-300 hover:scale-105 cursor-pointer">
                               <div className="flex min-h-[12rem]">
                                 <div className="w-1/3 relative">
                                   <Image
-                                    src={getActivityImageUrl(eveningActivity.place_name, 'evening', dayIndex) || eveningActivity.place_image_url || '/placeholder.svg'}
+                                    src={getActivityImageUrl(eveningActivity.place_name, 'evening', dayIndex)}
                                     alt={eveningActivity.place_name}
-                                    className="absolute inset-0 w-full h-full object-cover"
+                                    className="h-full w-full object-cover"
+                                    width={200}
+                                    height={200}
                                   />
-                                </div>
-                                <CardContent className="p-4 flex-1">
-                                  <div>
-                                    <div className="flex justify-between items-start mb-2">
-                                      <div>
-                                        <span className="text-sm text-blue-600 block mb-1">Evening</span>
-                                        <h4 className="font-semibold">{eveningActivity.place_name}</h4>
-                                      </div>
-                                      <div className="text-right">
-                                        {eveningActivity.ticket_price > 0 && (
-                                          <p className="font-medium">${eveningActivity.ticket_price}</p>
-                                        )}
-                                        {eveningActivity.rating && (
-                                          <p className="text-sm text-gray-600">Rating: {eveningActivity.rating}/5</p>
-                                        )}
-                                      </div>
-                                    </div>
-                                    <p className="text-sm text-gray-600 mb-2">{eveningActivity.place_details}</p>
-                                    <p className="text-sm">
-                                      <span className="font-medium">Best time to visit:</span> {eveningActivity.best_time_to_visit}
-                                    </p>
+                                  <div className="absolute top-0 left-0 bg-purple-500 text-white px-2 py-1 text-xs">
+                                    Evening
                                   </div>
-                                </CardContent>
+                                </div>
+                                <div className="w-2/3 p-4">
+                                  <h4 className="font-semibold text-base mb-1">{eveningActivity.place_name}</h4>
+                                  <p className="text-sm text-gray-600 mb-2 line-clamp-3">
+                                    {eveningActivity.place_details}
+                                  </p>
+                                  <div className="flex items-center text-sm">
+                                    <DollarSign className="h-4 w-4 mr-1" />
+                                    <span className="mr-3">${eveningActivity.ticket_price || 'Free'}</span>
+                                    <Clock className="h-4 w-4 mr-1" />
+                                    <span>{eveningActivity.best_time_to_visit || 'Evening'}</span>
+                                  </div>
+                                </div>
                               </div>
                             </Card>
                           )}
+                          
                           {nightActivity && (
                             <Card className="overflow-hidden transition-all duration-300 hover:scale-105 cursor-pointer">
                               <div className="flex min-h-[12rem]">
                                 <div className="w-1/3 relative">
                                   <Image
-                                    src={getActivityImageUrl(nightActivity.place_name, 'night', dayIndex) || nightActivity.place_image_url || '/placeholder.svg'}
+                                    src={getActivityImageUrl(nightActivity.place_name, 'night', dayIndex)}
                                     alt={nightActivity.place_name}
-                                    className="absolute inset-0 w-full h-full object-cover"
+                                    className="h-full w-full object-cover"
+                                    width={200}
+                                    height={200}
                                   />
-                                </div>
-                                <CardContent className="p-4 flex-1">
-                                  <div>
-                                    <div className="flex justify-between items-start mb-2">
-                                      <div>
-                                        <span className="text-sm text-purple-600 block mb-1">Night</span>
-                                        <h4 className="font-semibold">{nightActivity.place_name}</h4>
-                                      </div>
-                                      <div className="text-right">
-                                        {nightActivity.ticket_price > 0 && (
-                                          <p className="font-medium">${nightActivity.ticket_price}</p>
-                                        )}
-                                        {nightActivity.rating && (
-                                          <p className="text-sm text-gray-600">Rating: {nightActivity.rating}/5</p>
-                                        )}
-                                      </div>
-                                    </div>
-                                    <p className="text-sm text-gray-600 mb-2">{nightActivity.place_details}</p>
-                                    <p className="text-sm">
-                                      <span className="font-medium">Best time to visit:</span> {nightActivity.best_time_to_visit}
-                                    </p>
+                                  <div className="absolute top-0 left-0 bg-indigo-800 text-white px-2 py-1 text-xs">
+                                    Night
                                   </div>
-                                </CardContent>
+                                </div>
+                                <div className="w-2/3 p-4">
+                                  <h4 className="font-semibold text-base mb-1">{nightActivity.place_name}</h4>
+                                  <p className="text-sm text-gray-600 mb-2 line-clamp-3">
+                                    {nightActivity.place_details}
+                                  </p>
+                                  <div className="flex items-center text-sm">
+                                    <DollarSign className="h-4 w-4 mr-1" />
+                                    <span className="mr-3">${nightActivity.ticket_price || 'Free'}</span>
+                                    <Clock className="h-4 w-4 mr-1" />
+                                    <span>{nightActivity.best_time_to_visit || 'Night'}</span>
+                                  </div>
+                                </div>
                               </div>
                             </Card>
                           )}
@@ -746,34 +643,24 @@ const ViewTrip = () => {
                     // Otherwise, render the regular place card
                     return (
                       <Card key={placeIndex}>
-                        <div className="flex">
-                          <div className="w-1/3">
-                            <Image
-                              src={place.imageUrl || '/placeholder.svg'}
-                              alt={place.name}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                          <CardContent className="p-4 flex-1">
-                            <div>
-                              <div className="flex justify-between items-start mb-2">
-                                <h4 className="font-semibold">{place.name}</h4>
-                                <div className="text-right">
-                                  {place.ticketPrice > 0 && (
-                                    <p className="font-medium">${place.ticketPrice}</p>
-                                  )}
-                                  {place.rating && (
-                                    <p className="text-sm text-gray-600">Rating: {place.rating}/5</p>
-                                  )}
-                                </div>
-                              </div>
-                              <p className="text-gray-600 mb-2">{String(place.details)}</p>
-                              <p className="text-sm">
-                                <span className="font-medium">Best time to visit:</span> {place.bestTimeToVisit}
-                              </p>
+                        <CardContent className="p-4">
+                          <h4 className="font-semibold">{place.name || 'Activity'}</h4>
+                          <p className="text-sm text-gray-600 mt-2">
+                            {place.description || 'No description available'}
+                          </p>
+                          {place.time && (
+                            <div className="flex items-center mt-2 text-sm">
+                              <Clock className="h-4 w-4 mr-2" />
+                              <span>{place.time}</span>
                             </div>
-                          </CardContent>
-                        </div>
+                          )}
+                          {place.location && (
+                            <div className="flex items-center mt-1 text-sm">
+                              <MapPin className="h-4 w-4 mr-2" />
+                              <span>{place.location}</span>
+                            </div>
+                          )}
+                        </CardContent>
                       </Card>
                     );
                   })}
@@ -786,20 +673,15 @@ const ViewTrip = () => {
         {/* Travel Tips */}
         <section className="mb-8">
           <h2 className="text-2xl font-semibold mb-6">Travel Tips</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {travelPlan.tips?.map((tip, index) => (
-              <Card key={index}>
-                <CardContent className="p-4">
-                  <div className="flex gap-4">
-                    <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                      <span className="text-blue-600 font-semibold">{index + 1}</span>
-                    </div>
-                    <p className="text-gray-700">{tip}</p>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          <Card>
+            <CardContent className="p-6">
+              <ul className="list-disc pl-5 space-y-2">
+                {travelPlan.tips?.map((tip, index) => (
+                  <li key={index} className="text-gray-700">{tip}</li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
         </section>
       </main>
 
@@ -808,4 +690,4 @@ const ViewTrip = () => {
   );
 };
 
-export default ViewTrip; 
+export default ViewTrip;

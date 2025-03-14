@@ -11,55 +11,56 @@ export interface Database {
     Tables: {
       travel_plans: {
         Row: {
-          id: string;
-          user_id: string;
-          destination: string;
-          origin: string;
-          start_date: string | null;
-          end_date: string | null;
-          duration: number;
-          total_budget: number;
-          summary: string;
-          hotels: any;
-          flight: any;
-          day_plans: any;
-          tips: string[];
-          created_at: string;
-        };
+          id: string
+          user_id: string
+          destination: string
+          origin: string
+          start_date: string | null
+          end_date: string | null
+          duration: number
+          total_budget: number
+          summary: string | null
+          hotels: Json | null
+          flights: Json | null
+          day_plans: Json | null
+          tips: string[] | null
+          created_at: string
+        }
         Insert: {
-          id?: string;
-          user_id: string;
-          destination: string;
-          origin: string;
-          start_date?: string | null;
-          end_date?: string | null;
-          duration: number;
-          total_budget: number;
-          summary: string;
-          hotels: any;
-          flight: any;
-          day_plans: any;
-          tips: string[];
-          created_at?: string;
-        };
+          id?: string
+          user_id: string
+          destination: string
+          origin: string
+          start_date?: string | null
+          end_date?: string | null
+          duration: number
+          total_budget: number
+          summary?: string | null
+          hotels?: Json | null
+          flights?: Json | null
+          day_plans?: Json | null
+          tips?: string[] | null
+          created_at?: string
+        }
         Update: {
-          id?: string;
-          user_id?: string;
-          destination?: string;
-          origin?: string;
-          start_date?: string | null;
-          end_date?: string | null;
-          duration?: number;
-          total_budget?: number;
-          summary?: string;
-          hotels?: any;
-          flight?: any;
-          day_plans?: any;
-          tips?: string[];
-          created_at?: string;
-        };
-      };
-    };
+          id?: string
+          user_id?: string
+          destination?: string
+          origin?: string
+          start_date?: string | null
+          end_date?: string | null
+          duration?: number
+          total_budget?: number
+          summary?: string | null
+          hotels?: Json | null
+          flights?: Json | null
+          day_plans?: Json | null
+          tips?: string[] | null
+          created_at?: string
+        }
+        Relationships: []
+      }
+    }
     Views: {
       [_ in never]: never;
     };
@@ -67,6 +68,9 @@ export interface Database {
       [_ in never]: never;
     };
     Enums: {
+      [_ in never]: never;
+    };
+    CompositeTypes: {
       [_ in never]: never;
     };
   };

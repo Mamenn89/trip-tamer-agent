@@ -1,5 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { LucideIcon } from 'lucide-react';
+import { LucideIcon, AlertTriangle } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import Autocomplete from 'react-google-autocomplete';
+import { toast } from 'sonner';
 
 interface LocationInputProps {
   label: string;
@@ -203,6 +206,20 @@ const LocationInput: React.FC<LocationInputProps> = ({
           </div>
         )}
       </div>
+      
+      {apiError && (
+        <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-md">
+          <p className="text-sm text-amber-800 font-medium">Google Maps API configuration issue</p>
+          <p className="text-xs text-amber-700 mt-1">
+            To fix this issue, you need to:
+            <ol className="list-decimal ml-4 mt-1 space-y-1">
+              <li>Make sure you have a valid Google Maps API key</li>
+              <li>Enable the Places API in your Google Cloud Console</li>
+              <li>Ensure billing is properly set up for your Google Cloud project</li>
+            </ol>
+          </p>
+        </div>
+      )}
     </div>
   );
 };
