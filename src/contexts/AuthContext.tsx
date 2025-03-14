@@ -76,17 +76,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signInWithOAuth = async (provider: Provider): Promise<void> => {
     try {
       setIsLoading(true);
-      // Get the current URL or use the production URL if available
+      
+      // Always use the production URL if available, or fallback to current origin
       const redirectUrl = import.meta.env.VITE_REDIRECT_URL || window.location.origin;
       
-      const { error } = await supabase.auth.signInWithOAuth({
+      // Force the redirectTo to be an absolute URL to the planner page
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
           redirectTo: `${redirectUrl}/planner`,
+          // Explicitly set the Vercel URL in the provider-specific state for OAuth callback handling
+          queryParams: {
+            // Pass the redirect URL as custom state to ensure OAuth callback knows where to redirect
+            redirect_url: redirectUrl,
+          },
         },
       });
       
       if (error) throw error;
+      
+      // If we get a URL back, force redirect to it (this happens in some OAuth flows)
+      if (data?.url) {
+        window.location.href = data.url;
+      }
     } finally {
       setIsLoading(false);
     }
