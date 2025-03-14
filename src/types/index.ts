@@ -85,6 +85,7 @@ export interface TravelPlan {
   duration: number;
   totalBudget: number;
   summary: string;
+  travelers: number;
   hotels: Hotel[];
   flights: Flight[];
   dayPlans: DayPlan[];

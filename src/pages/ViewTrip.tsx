@@ -53,6 +53,15 @@ interface TravelPlan {
   tips?: string[];
 }
 
+interface Flight {
+  airlineName: string;
+  flightNumber: string;
+  departureAirport: string;
+  arrivalAirport: string;
+  flightDuration: string;
+  flightTime: string;
+}
+
 const ViewTrip = () => {
   const { id } = useParams<{ id: string }>();
   const { currentUser } = useAuth();
@@ -252,7 +261,7 @@ const ViewTrip = () => {
           id: parsedData.id,
           userId: parsedData.user_id,
           destination: parsedData.destination,
-          source: parsedData.source,
+          source: parsedData.origin || '', // Use origin field from Supabase
           startDate: parsedData.start_date,
           endDate: parsedData.end_date,
           duration: parsedData.duration,
@@ -323,72 +332,38 @@ const ViewTrip = () => {
 
       <main className="container mx-auto px-4 py-8 pt-24">
         {/* Hero Section */}
-        <div className="relative h-[400px] rounded-lg overflow-hidden mb-12">
+        <div className="relative h-80 mb-12 overflow-hidden group cursor-pointer">
           {loadingHeroImage ? (
             <div className="w-full h-full flex items-center justify-center bg-gray-100">
               <LoadingIndicator />
             </div>
           ) : (
-            <Image
-              src={heroImage || '/placeholders/destination.jpg'}
-              alt={travelPlan.destination}
-              className="w-full h-full object-cover"
-              width={1920}
-              height={400}
-            />
+            <div className="w-full h-full overflow-hidden">
+              <Image
+                src={heroImage || '/placeholders/destination.jpg'}
+                alt={travelPlan.destination}
+                className="w-full h-full object-cover transition-transform duration-1000 ease-out group-hover:scale-105"
+                width={1920}
+                height={400}
+              />
+            </div>
           )}
-          <div className="absolute inset-0 bg-black/50 flex flex-col justify-center items-center text-white p-8">
-            <h1 className="text-4xl md:text-5xl font-bold mb-4 text-center">
+          <div className="absolute inset-0 bg-black/50 flex flex-col justify-end text-white p-8">
+            <h1 className="text-2xl md:text-3xl font-bold mb-2 text-left">
               {travelPlan.destination}
             </h1>
-            <p className="text-xl max-w-2xl text-center">
-              {travelPlan.summary}
-            </p>
           </div>
         </div>
 
         {/* Trip Details */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-          <Card className="shadow-md">
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <MapPin className="mr-4 h-6 w-6 text-primary" />
-                <div>
-                  <p className="text-sm text-muted-foreground">From</p>
-                  <p className="font-medium">{travelPlan.source}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="shadow-md">
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <Calendar className="mr-4 h-6 w-6 text-primary" />
-                <div>
-                  <p className="text-sm text-muted-foreground">Duration</p>
-                  <p className="font-medium">{travelPlan.duration} Days</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="shadow-md">
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <DollarSign className="mr-4 h-6 w-6 text-primary" />
-                <div>
-                  <p className="text-sm text-muted-foreground">Budget</p>
-                  <p className="font-medium">${travelPlan.totalBudget}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        <div className="grid grid-cols-1 md:grid-cols-1 gap-6 mb-12">
           <Card className="shadow-md">
             <CardContent className="p-6">
               <div className="flex items-center">
                 <Users className="mr-4 h-6 w-6 text-primary" />
                 <div>
-                  <p className="text-sm text-muted-foreground">Travellers</p>
-                  <p className="font-medium">Not specified</p>
+                  <h2 className="text-lg font-bold text-gray-800">Trip Summary</h2>
+                  <p className="font-medium">{travelPlan.summary || "No summary available"}</p>
                 </div>
               </div>
             </CardContent>
@@ -400,7 +375,7 @@ const ViewTrip = () => {
           <h2 className="text-2xl font-semibold mb-6">Hotel Recommendations</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {travelPlan.hotels?.map((hotel, index) => (
-              <Card key={index} className="overflow-hidden transition-all duration-300 hover:scale-105 cursor-pointer">
+              <Card key={index} className="overflow-hidden transition-all duration-300 hover:scale-105 cursor-pointer flex flex-col">
                 <div className="relative h-48">
                   <Image
                     src={hotelImages[hotel.name] || '/placeholders/hotel.jpg'}
@@ -410,14 +385,19 @@ const ViewTrip = () => {
                     height={200}
                   />
                 </div>
-                <CardContent className="p-4">
-                  <h3 className="text-lg font-semibold mb-2">{hotel.name}</h3>
+                <CardContent className="p-4 flex flex-col flex-grow">
+                  <h3 className="text-lg font-semibold mb-2 line-clamp-1">{hotel.name}</h3>
                   <div className="flex items-center mb-2">
                     <Star className="h-4 w-4 text-yellow-400 mr-1" />
                     <p className="text-sm">{hotel.rating || 'N/A'}</p>
                   </div>
-                  <p className="text-sm text-gray-600 mb-2">{hotel.location || 'Location not specified'}</p>
-                  <p className="font-medium">${hotel.price_per_night}/night</p>
+                  <div className="mb-3">
+                    <p className="text-sm font-medium text-gray-700">Address:</p>
+                    <p className="text-sm text-gray-600 line-clamp-2">{hotel.address || hotel.location || 'Address not available'}</p>
+                  </div>
+                  <div className="mt-auto pt-2 pb-1">
+                    <p className="font-medium text-black text-base">{hotel.price ? `$${hotel.price}/night` : hotel.price_per_night ? `$${hotel.price_per_night}/night` : 'Price not available'}</p>
+                  </div>
                 </CardContent>
               </Card>
             ))}
@@ -434,23 +414,27 @@ const ViewTrip = () => {
                   <div className="flex justify-between items-center flex-wrap">
                     <div className="mb-4 md:mb-0">
                       <p className="text-sm text-muted-foreground">Airline</p>
-                      <p className="font-medium">{flight.airline}</p>
+                      <p className="font-medium">{flight.airlineName}</p>
                     </div>
                     <div className="mb-4 md:mb-0">
                       <p className="text-sm text-muted-foreground">Flight Number</p>
-                      <p className="font-medium">{flight.flight_number || 'N/A'}</p>
+                      <p className="font-medium">{flight.flightNumber || 'N/A'}</p>
                     </div>
                     <div className="mb-4 md:mb-0">
                       <p className="text-sm text-muted-foreground">Departure</p>
-                      <p className="font-medium">{flight.departure_time || 'N/A'}</p>
+                      <p className="font-medium">{flight.departureAirport || 'N/A'}</p>
                     </div>
                     <div className="mb-4 md:mb-0">
                       <p className="text-sm text-muted-foreground">Arrival</p>
-                      <p className="font-medium">{flight.arrival_time || 'N/A'}</p>
+                      <p className="font-medium">{flight.arrivalAirport || 'N/A'}</p>
+                    </div>
+                    <div className="mb-4 md:mb-0">
+                      <p className="text-sm text-muted-foreground">Duration</p>
+                      <p className="font-medium">{flight.flightDuration || 'N/A'}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Price</p>
-                      <p className="font-medium">${flight.price}</p>
+                      <p className="text-sm text-muted-foreground">Time</p>
+                      <p className="font-medium">{flight.flightTime || 'N/A'}</p>
                     </div>
                   </div>
                 </CardContent>
@@ -482,7 +466,7 @@ const ViewTrip = () => {
                     if (earlyMorningActivity || morningActivity || afternoonActivity || eveningActivity || nightActivity) {
                       return (
                         <div key={placeIndex} className="contents">
-                          {earlyMorningActivity && (
+                          {earlyMorningActivity && earlyMorningActivity.place_name !== 'N/A' && (
                             <Card className="overflow-hidden transition-all duration-300 hover:scale-105 cursor-pointer">
                               <div className="flex min-h-[12rem]">
                                 <div className="w-1/3 relative">
@@ -497,23 +481,20 @@ const ViewTrip = () => {
                                     Early Morning
                                   </div>
                                 </div>
-                                <div className="w-2/3 p-4">
+                                <div className="w-2/3 p-4 flex flex-col">
                                   <h4 className="font-semibold text-base mb-1">{earlyMorningActivity.place_name}</h4>
                                   <p className="text-sm text-gray-600 mb-2 line-clamp-3">
                                     {earlyMorningActivity.place_details}
                                   </p>
-                                  <div className="flex items-center text-sm">
-                                    <DollarSign className="h-4 w-4 mr-1" />
-                                    <span className="mr-3">${earlyMorningActivity.ticket_price || 'Free'}</span>
-                                    <Clock className="h-4 w-4 mr-1" />
-                                    <span>{earlyMorningActivity.best_time_to_visit || 'Early Morning'}</span>
+                                  <div className="mt-auto pt-2">
+                                    <span className="text-sm text-gray-700">{earlyMorningActivity.best_time_to_visit || 'Early Morning'}</span>
                                   </div>
                                 </div>
                               </div>
                             </Card>
                           )}
                           
-                          {morningActivity && (
+                          {morningActivity && morningActivity.place_name !== 'N/A' && (
                             <Card className="overflow-hidden transition-all duration-300 hover:scale-105 cursor-pointer">
                               <div className="flex min-h-[12rem]">
                                 <div className="w-1/3 relative">
@@ -528,23 +509,20 @@ const ViewTrip = () => {
                                     Morning
                                   </div>
                                 </div>
-                                <div className="w-2/3 p-4">
+                                <div className="w-2/3 p-4 flex flex-col">
                                   <h4 className="font-semibold text-base mb-1">{morningActivity.place_name}</h4>
                                   <p className="text-sm text-gray-600 mb-2 line-clamp-3">
                                     {morningActivity.place_details}
                                   </p>
-                                  <div className="flex items-center text-sm">
-                                    <DollarSign className="h-4 w-4 mr-1" />
-                                    <span className="mr-3">${morningActivity.ticket_price || 'Free'}</span>
-                                    <Clock className="h-4 w-4 mr-1" />
-                                    <span>{morningActivity.best_time_to_visit || 'Morning'}</span>
+                                  <div className="mt-auto pt-2">
+                                    <span className="text-sm text-gray-700">{morningActivity.best_time_to_visit || 'Morning'}</span>
                                   </div>
                                 </div>
                               </div>
                             </Card>
                           )}
                           
-                          {afternoonActivity && (
+                          {afternoonActivity && afternoonActivity.place_name !== 'N/A' && (
                             <Card className="overflow-hidden transition-all duration-300 hover:scale-105 cursor-pointer">
                               <div className="flex min-h-[12rem]">
                                 <div className="w-1/3 relative">
@@ -559,23 +537,20 @@ const ViewTrip = () => {
                                     Afternoon
                                   </div>
                                 </div>
-                                <div className="w-2/3 p-4">
+                                <div className="w-2/3 p-4 flex flex-col">
                                   <h4 className="font-semibold text-base mb-1">{afternoonActivity.place_name}</h4>
                                   <p className="text-sm text-gray-600 mb-2 line-clamp-3">
                                     {afternoonActivity.place_details}
                                   </p>
-                                  <div className="flex items-center text-sm">
-                                    <DollarSign className="h-4 w-4 mr-1" />
-                                    <span className="mr-3">${afternoonActivity.ticket_price || 'Free'}</span>
-                                    <Clock className="h-4 w-4 mr-1" />
-                                    <span>{afternoonActivity.best_time_to_visit || 'Afternoon'}</span>
+                                  <div className="mt-auto pt-2">
+                                    <span className="text-sm text-gray-700">{afternoonActivity.best_time_to_visit || 'Afternoon'}</span>
                                   </div>
                                 </div>
                               </div>
                             </Card>
                           )}
                           
-                          {eveningActivity && (
+                          {eveningActivity && eveningActivity.place_name !== 'N/A' && (
                             <Card className="overflow-hidden transition-all duration-300 hover:scale-105 cursor-pointer">
                               <div className="flex min-h-[12rem]">
                                 <div className="w-1/3 relative">
@@ -590,23 +565,20 @@ const ViewTrip = () => {
                                     Evening
                                   </div>
                                 </div>
-                                <div className="w-2/3 p-4">
+                                <div className="w-2/3 p-4 flex flex-col">
                                   <h4 className="font-semibold text-base mb-1">{eveningActivity.place_name}</h4>
                                   <p className="text-sm text-gray-600 mb-2 line-clamp-3">
                                     {eveningActivity.place_details}
                                   </p>
-                                  <div className="flex items-center text-sm">
-                                    <DollarSign className="h-4 w-4 mr-1" />
-                                    <span className="mr-3">${eveningActivity.ticket_price || 'Free'}</span>
-                                    <Clock className="h-4 w-4 mr-1" />
-                                    <span>{eveningActivity.best_time_to_visit || 'Evening'}</span>
+                                  <div className="mt-auto pt-2">
+                                    <span className="text-sm text-gray-700">{eveningActivity.best_time_to_visit || 'Evening'}</span>
                                   </div>
                                 </div>
                               </div>
                             </Card>
                           )}
                           
-                          {nightActivity && (
+                          {nightActivity && nightActivity.place_name !== 'N/A' && (
                             <Card className="overflow-hidden transition-all duration-300 hover:scale-105 cursor-pointer">
                               <div className="flex min-h-[12rem]">
                                 <div className="w-1/3 relative">
@@ -621,16 +593,13 @@ const ViewTrip = () => {
                                     Night
                                   </div>
                                 </div>
-                                <div className="w-2/3 p-4">
+                                <div className="w-2/3 p-4 flex flex-col">
                                   <h4 className="font-semibold text-base mb-1">{nightActivity.place_name}</h4>
                                   <p className="text-sm text-gray-600 mb-2 line-clamp-3">
                                     {nightActivity.place_details}
                                   </p>
-                                  <div className="flex items-center text-sm">
-                                    <DollarSign className="h-4 w-4 mr-1" />
-                                    <span className="mr-3">${nightActivity.ticket_price || 'Free'}</span>
-                                    <Clock className="h-4 w-4 mr-1" />
-                                    <span>{nightActivity.best_time_to_visit || 'Night'}</span>
+                                  <div className="mt-auto pt-2">
+                                    <span className="text-sm text-gray-700">{nightActivity.best_time_to_visit || 'Night'}</span>
                                   </div>
                                 </div>
                               </div>
