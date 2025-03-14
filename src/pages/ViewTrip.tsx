@@ -6,7 +6,6 @@ import AnimatedBackground from '../components/AnimatedBackground';
 import NavBar from '../components/NavBar';
 import Footer from '../components/Footer';
 import LoadingIndicator from '../components/LoadingIndicator';
-import { TravelPlan, Activity } from '../types';
 import { Card, CardContent } from '@/components/ui/card';
 import { MapPin, Calendar, DollarSign, Users, Plane, Hotel, Clock, Navigation, Star } from 'lucide-react';
 import Image from '@/components/ui/image';
@@ -47,9 +46,9 @@ interface TravelPlan {
   duration: number;
   totalBudget: number;
   summary: string;
-  hotels?: any[];
-  flights?: any[];
-  dayPlans?: any[];
+  hotels?: Hotel[];
+  flights?: Flight[];
+  dayPlans?: DayPlan[];
   tips?: string[];
 }
 
@@ -60,6 +59,49 @@ interface Flight {
   arrivalAirport: string;
   flightDuration: string;
   flightTime: string;
+}
+
+interface Hotel {
+  name: string;
+  rating?: string | number;
+  address?: string;
+  location?: string;
+  price?: number;
+  price_per_night?: number;
+}
+
+interface DayPlan {
+  places?: Place[];
+  date?: string;
+}
+
+interface Place {
+  details?: {
+    early_morning?: Activity;
+    morning?: Activity;
+    afternoon?: Activity;
+    evening?: Activity;
+    night?: Activity;
+  } | PlaceDetails;
+  // Direct properties for flat structure
+  early_morning?: Activity;
+  morning?: Activity;
+  afternoon?: Activity;
+  evening?: Activity;
+  night?: Activity;
+  // Additional properties used in the UI
+  name?: string;
+  description?: string;
+  time?: string;
+  location?: string;
+}
+
+interface PlaceDetails {
+  early_morning?: Activity;
+  morning?: Activity;
+  afternoon?: Activity;
+  evening?: Activity;
+  night?: Activity;
 }
 
 const ViewTrip = () => {
@@ -95,7 +137,7 @@ const ViewTrip = () => {
   };
 
   // Function to fetch hotel photos from Google Places API
-  const fetchHotelPhotos = async (hotels: any[]) => {
+  const fetchHotelPhotos = async (hotels: Hotel[]) => {
     if (!hotels || hotels.length === 0) return;
 
     const hotelImagesMap: Record<string, string> = {};
@@ -130,7 +172,7 @@ const ViewTrip = () => {
   };
 
   // Function to fetch activity images from Google Places API
-  const fetchActivityImages = async (dayPlans: any[]) => {
+  const fetchActivityImages = async (dayPlans: DayPlan[]) => {
     if (!dayPlans || dayPlans.length === 0) return;
 
     const activityImagesArray: ActivityImage[] = [];
@@ -145,19 +187,19 @@ const ViewTrip = () => {
         // Process each place in the day plan
         for (const place of day.places) {
           // Handle different data structures (nested vs. flat)
-          let details: any;
+          let details: PlaceDetails;
           
           if (typeof place.details === 'object') {
-            details = place.details;
+            details = place.details as PlaceDetails;
           } else {
-            details = place; // Flat structure
+            details = place as unknown as PlaceDetails; // Flat structure
           }
 
           // Process each time slot in the place
           const timeSlots = ['early_morning', 'morning', 'afternoon', 'evening', 'night'];
           
-          for (const slot of timeSlots) {
-            const activity = details[slot];
+          for (const slot of timeSlots as Array<keyof PlaceDetails>) {
+            const activity = details[slot] as Activity | undefined;
             
             if (!activity || !activity.place_name) continue;
 
@@ -248,7 +290,7 @@ const ViewTrip = () => {
         }
 
         // Parse JSON fields if they're stored as strings
-        let parsedData = {
+        const parsedData = {
           ...data,
           hotels: typeof data.hotels === 'string' ? JSON.parse(data.hotels) : data.hotels,
           flights: typeof data.flights === 'string' ? JSON.parse(data.flights) : data.flights,
@@ -293,7 +335,7 @@ const ViewTrip = () => {
     };
 
     fetchTripDetails();
-  }, [id]);
+  }, [id, currentUser]);
 
   if (loading) {
     return (

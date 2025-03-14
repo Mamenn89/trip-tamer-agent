@@ -4,6 +4,38 @@ import { Input } from '@/components/ui/input';
 import Autocomplete from 'react-google-autocomplete';
 import { toast } from 'sonner';
 
+// Define proper types for Google Places API responses
+interface PlaceStructuredFormat {
+  mainText?: {
+    text: string;
+  };
+  secondaryText?: {
+    text: string;
+  };
+}
+
+interface PlacePrediction {
+  place: string;
+  text: {
+    text: string;
+  };
+  structuredFormat?: PlaceStructuredFormat;
+}
+
+interface PlaceSuggestion {
+  placePrediction: PlacePrediction;
+}
+
+interface PlaceDetails {
+  formatted_address: string;
+  geometry: {
+    location: {
+      lat: number;
+      lng: number;
+    }
+  };
+}
+
 interface LocationInputProps {
   label: string;
   name: string;
@@ -11,7 +43,7 @@ interface LocationInputProps {
   placeholder: string;
   icon: LucideIcon;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  onPlaceSelect?: (place: any) => void;
+  onPlaceSelect?: (place: PlaceDetails) => void;
   required?: boolean;
 }
 
@@ -26,17 +58,17 @@ const LocationInput: React.FC<LocationInputProps> = ({
   required = false,
 }) => {
   const [apiError, setApiError] = useState<string>('');
-  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [suggestions, setSuggestions] = useState<PlaceSuggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [loading, setLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
-  // Debounce function
-  const debounce = (func: Function, wait: number) => {
+  // Debounce function with proper type
+  const debounce = <T extends (...args: unknown[]) => void>(func: T, wait: number) => {
     let timeout: NodeJS.Timeout;
-    return (...args: any[]) => {
+    return (...args: Parameters<T>) => {
       clearTimeout(timeout);
       timeout = setTimeout(() => func(...args), wait);
     };
@@ -76,9 +108,9 @@ const LocationInput: React.FC<LocationInputProps> = ({
         setSuggestions(data.suggestions);
         setShowSuggestions(true);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Places API Error:', error);
-      setApiError(error.message);
+      setApiError(error instanceof Error ? error.message : String(error));
     } finally {
       setLoading(false);
     }
@@ -92,7 +124,7 @@ const LocationInput: React.FC<LocationInputProps> = ({
     debouncedSearch(value);
   };
 
-  const handleSuggestionClick = async (suggestion: any) => {
+  const handleSuggestionClick = async (suggestion: PlaceSuggestion) => {
     const place = suggestion.placePrediction;
     const mainText = place.structuredFormat?.mainText?.text || place.text.text;
     
@@ -206,20 +238,6 @@ const LocationInput: React.FC<LocationInputProps> = ({
           </div>
         )}
       </div>
-      
-      {apiError && (
-        <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-md">
-          <p className="text-sm text-amber-800 font-medium">Google Maps API configuration issue</p>
-          <p className="text-xs text-amber-700 mt-1">
-            To fix this issue, you need to:
-            <ol className="list-decimal ml-4 mt-1 space-y-1">
-              <li>Make sure you have a valid Google Maps API key</li>
-              <li>Enable the Places API in your Google Cloud Console</li>
-              <li>Ensure billing is properly set up for your Google Cloud project</li>
-            </ol>
-          </p>
-        </div>
-      )}
     </div>
   );
 };
