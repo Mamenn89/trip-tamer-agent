@@ -28,6 +28,12 @@ const Login = () => {
     }
   }, [isAuthenticated, navigate]);
 
+  // Get the appropriate redirect URL
+  const getRedirectUrl = () => {
+    // Use the production URL if available, otherwise use the current origin
+    return import.meta.env.VITE_REDIRECT_URL || window.location.origin;
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -39,7 +45,10 @@ const Login = () => {
         description: 'Welcome back!',
         duration: 3000,
       });
-      navigate('/planner');
+      
+      // Redirect to the planner page using the correct base URL
+      const redirectUrl = getRedirectUrl();
+      window.location.href = `${redirectUrl}/planner`;
     } catch (error) {
       toast({
         title: 'Login failed',
@@ -47,7 +56,6 @@ const Login = () => {
         variant: 'destructive',
         duration: 3000,
       });
-    } finally {
       setIsSubmitting(false);
     }
   };
@@ -63,7 +71,10 @@ const Login = () => {
         description: 'Welcome to Dika Travel Mate!',
         duration: 3000,
       });
-      navigate('/planner');
+      
+      // Redirect to the planner page using the correct base URL
+      const redirectUrl = getRedirectUrl();
+      window.location.href = `${redirectUrl}/planner`;
     } catch (error) {
       toast({
         title: 'Signup failed',
@@ -71,7 +82,6 @@ const Login = () => {
         variant: 'destructive',
         duration: 3000,
       });
-    } finally {
       setIsSubmitting(false);
     }
   };
