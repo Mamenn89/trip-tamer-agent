@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Google Maps API Test</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    #map {
+      height: 400px;
+      width: 100%;
+    }
+    .error {
+      color: red;
+      padding: 10px;
+      margin: 10px 0;
+      border: 1px solid red;
+    }
+  </style>
+</head>
+<body>
+  <h1>Google Maps API Test</h1>
+  <div id="map"></div>
+  <div id="status"></div>
+
+  <script>
+    // Get the API key from the URL parameter or use the default one
+    const urlParams = new URLSearchParams(window.location.search);
+    const apiKey = urlParams.get('key') || 'AIzaSyBxf4gqvl9YMTCU5YyvNkPq5qiLut1g7Yw';
+    
+    document.getElementById('status').innerHTML = `
+      <p>Testing with API key: ${apiKey.substring(0, 10)}...</p>
+    `;
+
+    // Function to initialize the map
+    function initMap() {
+      document.getElementById('status').innerHTML += `
+        <p style="color: green;">Map API loaded successfully!</p>
+      `;
+      
+      const map = new google.maps.Map(document.getElementById('map'), {
+        center: { lat: -34.397, lng: 150.644 },
+        zoom: 8
+      });
+    }
+
+    // Load the Google Maps API
+    function loadGoogleMapsAPI() {
+      const script = document.createElement('script');
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&callback=initMap&libraries=places`;
+      script.async = true;
+      script.defer = true;
+      
+      // Handle errors
+      window.gm_authFailure = function() {
+        document.getElementById('status').innerHTML += `
+          <div class="error">
+            <strong>Authentication Error:</strong> The Google Maps API key is invalid or has restrictions.
+            <p>Common issues:</p>
+            <ul>
+              <li>API key might have domain restrictions</li>
+              <li>Billing might not be enabled on your Google Cloud account</li>
+              <li>Required APIs (Maps JavaScript API, Places API) might not be enabled</li>
+            </ul>
+            <p>Please check your Google Cloud Console: <a href="https://console.cloud.google.com/google/maps-apis/overview" target="_blank">https://console.cloud.google.com/google/maps-apis/overview</a></p>
+          </div>
+        `;
+      };
+      
+      script.onerror = function() {
+        document.getElementById('status').innerHTML += `
+          <div class="error">
+            <strong>Loading Error:</strong> Failed to load the Google Maps API.
+            <p>This could be due to network issues or an invalid API key.</p>
+          </div>
+        `;
+      };
+      
+      document.head.appendChild(script);
+    }
+    
+    // Load the API
+    loadGoogleMapsAPI();
+  </script>
+</body>
+</html> 

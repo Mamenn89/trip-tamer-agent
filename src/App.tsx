@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -9,6 +8,8 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Planner from "./pages/Planner";
+import ViewTrip from "./pages/ViewTrip";
+import AllTrips from "./pages/AllTrips";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,6 +29,22 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Planner />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/viewtrip/:id" 
+              element={
+                <ProtectedRoute>
+                  <ViewTrip />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/mytrips" 
+              element={
+                <ProtectedRoute>
+                  <AllTrips />
                 </ProtectedRoute>
               } 
             />

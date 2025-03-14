@@ -6,24 +6,70 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
-export type Database = {
+export interface Database {
   public: {
     Tables: {
-      [_ in never]: never
-    }
+      travel_plans: {
+        Row: {
+          id: string;
+          user_id: string;
+          destination: string;
+          origin: string;
+          start_date: string | null;
+          end_date: string | null;
+          duration: number;
+          total_budget: number;
+          summary: string;
+          hotels: any;
+          flight: any;
+          day_plans: any;
+          tips: string[];
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          destination: string;
+          origin: string;
+          start_date?: string | null;
+          end_date?: string | null;
+          duration: number;
+          total_budget: number;
+          summary: string;
+          hotels: any;
+          flight: any;
+          day_plans: any;
+          tips: string[];
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          destination?: string;
+          origin?: string;
+          start_date?: string | null;
+          end_date?: string | null;
+          duration?: number;
+          total_budget?: number;
+          summary?: string;
+          hotels?: any;
+          flight?: any;
+          day_plans?: any;
+          tips?: string[];
+          created_at?: string;
+        };
+      };
+    };
     Views: {
-      [_ in never]: never
-    }
+      [_ in never]: never;
+    };
     Functions: {
-      [_ in never]: never
-    }
+      [_ in never]: never;
+    };
     Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
+      [_ in never]: never;
+    };
+  };
 }
 
 type PublicSchema = Database[Extract<keyof Database, "public">]

@@ -1,8 +1,7 @@
-
 import { TravelFormData, TravelPlan } from '../types';
 
-// Using a simple approach first - in a real app, we'd want to use API keys properly stored in environment variables
-const API_KEY = "YOUR_GEMINI_API_KEY"; // This is just a placeholder, we'll prompt the user to enter their API key
+// Use environment variable for API key
+const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
 export const generateTravelPlan = async (formData: TravelFormData): Promise<TravelPlan> => {
   try {

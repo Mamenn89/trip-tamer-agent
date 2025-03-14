@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { MapPin, Menu, X, LogOut } from 'lucide-react';
+import { MapPin, Menu, X, LogOut, Compass } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
@@ -60,7 +59,10 @@ const NavBar: React.FC = () => {
         <nav className="hidden md:flex items-center space-x-8">
           <NavLink to="/" label="Home" currentPath={location.pathname} />
           {isAuthenticated && (
-            <NavLink to="/planner" label="Plan a Trip" currentPath={location.pathname} />
+            <>
+              <NavLink to="/planner" label="Plan a Trip" currentPath={location.pathname} />
+              <NavLink to="/mytrips" label="My Trips" currentPath={location.pathname} />
+            </>
           )}
           <NavLink to="/inspiration" label="Inspiration" currentPath={location.pathname} />
           <NavLink to="/about" label="About" currentPath={location.pathname} />
@@ -100,7 +102,10 @@ const NavBar: React.FC = () => {
             <nav className="flex flex-col space-y-4">
               <MobileNavLink to="/" label="Home" onClick={() => setIsMobileMenuOpen(false)} />
               {isAuthenticated && (
-                <MobileNavLink to="/planner" label="Plan a Trip" onClick={() => setIsMobileMenuOpen(false)} />
+                <>
+                  <MobileNavLink to="/planner" label="Plan a Trip" onClick={() => setIsMobileMenuOpen(false)} />
+                  <MobileNavLink to="/mytrips" label="My Trips" onClick={() => setIsMobileMenuOpen(false)} />
+                </>
               )}
               <MobileNavLink to="/inspiration" label="Inspiration" onClick={() => setIsMobileMenuOpen(false)} />
               <MobileNavLink to="/about" label="About" onClick={() => setIsMobileMenuOpen(false)} />

@@ -1,0 +1,15 @@
+{
+  "name": "supabase-scripts",
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": {
+    "@supabase/supabase-js": "latest",
+    "clsx": "^2.1.1",
+    "dotenv": "latest",
+    "googleapis": "^146.0.0",
+    "tailwind-merge": "^3.0.2"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.10"
+  }
+}
