@@ -28,13 +28,13 @@ const Image = React.forwardRef<HTMLImageElement, ImageProps>(
       );
     };
 
-    // Convert Google image URLs to use a proxy
+    // Convert Google image URLs to use a proxy if needed
     const getProxiedImageUrl = (url: string) => {
       if (!url) return '';
       
-      // If it's a Google Places photo (lh3.googleusercontent.com)
-      if (url.includes('lh3.googleusercontent.com/place-photos')) {
-        // Create a proxy URL through our own server
+      // Only proxy Google Place photos in production
+      if (url.includes('googleusercontent.com/place-photos')) {
+        console.log('Proxying Google Place photo:', url);
         return `/api/image-proxy?url=${encodeURIComponent(url)}`;
       }
       
@@ -47,19 +47,18 @@ const Image = React.forwardRef<HTMLImageElement, ImageProps>(
         return;
       }
       
-      // If not a Google image, use placeholder instead
-      if (!isGoogleImage(src) && src !== PLACEHOLDER_IMAGE) {
-        console.log('Non-Google image replaced with placeholder:', src);
-        setImageSrc(PLACEHOLDER_IMAGE);
-        return;
-      }
-      
-      // For Google images, check if we need to proxy
-      if (src.includes('lh3.googleusercontent.com')) {
-        const proxiedUrl = getProxiedImageUrl(src);
-        console.log('Using proxied URL:', proxiedUrl);
-        setImageSrc(proxiedUrl);
+      // For Google images, determine if we need to proxy
+      if (isGoogleImage(src)) {
+        // Google userContent images need proxying to avoid CORS issues
+        if (src.includes('googleusercontent.com/place-photos')) {
+          const proxiedUrl = getProxiedImageUrl(src);
+          console.log('Using proxied URL:', proxiedUrl);
+          setImageSrc(proxiedUrl);
+        } else {
+          setImageSrc(src);
+        }
       } else {
+        console.log('Using original image URL:', src);
         setImageSrc(src);
       }
     }, [src]);
@@ -83,14 +82,8 @@ const Image = React.forwardRef<HTMLImageElement, ImageProps>(
       }
     };
 
-    // Use effect to handle Places API URLs
+    // Handle Places API URLs with fetch if needed
     useEffect(() => {
-      if (imageSrc && imageSrc.includes('places.googleapis.com/v1')) {
-        fetchImage(imageSrc).then(newSrc => {
-          setImageSrc(newSrc);
-        });
-      }
-      
       // Cleanup function for blob URLs
       return () => {
         if (imageSrc?.startsWith('blob:')) {
@@ -98,31 +91,6 @@ const Image = React.forwardRef<HTMLImageElement, ImageProps>(
         }
       };
     }, [imageSrc]);
-
-    // If the URL is from the Places API v1, fetch it with proper headers
-    const fetchImage = async (url: string) => {
-      if (url.includes('places.googleapis.com/v1')) {
-        try {
-          const response = await fetch(url, {
-            headers: {
-              'X-Goog-Api-Key': import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '',
-              'X-Goog-FieldMask': '*'
-            }
-          });
-          
-          if (!response.ok) {
-            throw new Error(`Failed to fetch image: ${response.statusText}`);
-          }
-          
-          const blob = await response.blob();
-          return URL.createObjectURL(blob);
-        } catch (error) {
-          console.error('Error fetching image:', error);
-          return PLACEHOLDER_IMAGE;
-        }
-      }
-      return url;
-    };
 
     return (
       <img
