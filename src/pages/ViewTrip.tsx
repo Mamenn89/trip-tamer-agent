@@ -68,18 +68,18 @@ const ViewTrip = () => {
   const fetchDestinationPhotos = async (destination: string) => {
     try {
       setLoadingHeroImage(true);
-      const photos = await googlePlacesService.searchPhotos(destination);
+      const photos = await googlePlacesService.getPlacePhotos(destination);
       
       if (photos && photos.length > 0) {
         setHeroImage(photos[0].url);
       } else {
-        // Set a default image if no photos are found
-        setHeroImage('/placeholders/destination.jpg');
+        // Set a default background color if no photos are found
+        setHeroImage('');
       }
     } catch (error) {
       console.error('Error fetching destination photos:', error);
-      // Set a default image on error
-      setHeroImage('/placeholders/destination.jpg');
+      // Set a default (empty) image on error
+      setHeroImage('');
     } finally {
       setLoadingHeroImage(false);
     }
@@ -98,18 +98,18 @@ const ViewTrip = () => {
           if (!hotel.name) return;
 
           try {
-            const photos = await googlePlacesService.searchPhotos(hotel.name);
+            const photo = await googlePlacesService.getHotelPhoto(hotel.name);
             
-            if (photos && photos.length > 0) {
-              hotelImagesMap[hotel.name] = photos[0].url;
+            if (photo && photo.url) {
+              hotelImagesMap[hotel.name] = photo.url;
             } else {
-              // Set a default image if no photos are found
-              hotelImagesMap[hotel.name] = '/placeholders/hotel.jpg';
+              // Set an empty string if no photos are found - will use a default UI element
+              hotelImagesMap[hotel.name] = '';
             }
           } catch (error) {
             console.error(`Error fetching photos for hotel ${hotel.name}:`, error);
-            // Set a default image on error
-            hotelImagesMap[hotel.name] = '/placeholders/hotel.jpg';
+            // Set an empty string on error
+            hotelImagesMap[hotel.name] = '';
           }
         })
       );
@@ -153,7 +153,7 @@ const ViewTrip = () => {
             if (!activity || !activity.place_name) continue;
 
             try {
-              const photos = await googlePlacesService.searchPhotos(activity.place_name);
+              const photos = await googlePlacesService.getPlacePhotos(activity.place_name);
               
               if (photos && photos.length > 0) {
                 activityImagesArray.push({
