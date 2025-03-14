@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -9,13 +8,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import NavBar from '../components/NavBar';
 import Footer from '../components/Footer';
 import AnimatedBackground from '../components/AnimatedBackground';
-import { Mail, Lock, UserPlus, LogIn } from 'lucide-react';
+import { Mail, Lock, UserPlus, LogIn, Chrome } from 'lucide-react';
+import AppleIcon from '@/components/icons/AppleIcon';
+import { Provider } from '@supabase/supabase-js';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { login, signup, isAuthenticated } = useAuth();
+  const { login, signup, signInWithOAuth, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
@@ -71,6 +72,22 @@ const Login = () => {
         duration: 3000,
       });
     } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleOAuthLogin = async (provider: Provider) => {
+    try {
+      setIsSubmitting(true);
+      await signInWithOAuth(provider);
+      // No need for toast or navigation here as Supabase will handle the redirect
+    } catch (error) {
+      toast({
+        title: 'Login failed',
+        description: error instanceof Error ? error.message : `Could not sign in with ${provider}`,
+        variant: 'destructive',
+        duration: 3000,
+      });
       setIsSubmitting(false);
     }
   };
@@ -137,6 +154,40 @@ const Login = () => {
                   {isSubmitting ? 'Signing in...' : 'Sign In'}
                 </Button>
               </form>
+
+              <div className="mt-6">
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-gray-300"></div>
+                  </div>
+                  <div className="relative flex justify-center text-sm">
+                    <span className="px-2 bg-white text-gray-500">Or continue with</span>
+                  </div>
+                </div>
+                
+                <div className="mt-6 grid grid-cols-2 gap-3">
+                  <Button 
+                    type="button" 
+                    variant="outline"
+                    onClick={() => handleOAuthLogin('google')}
+                    disabled={isSubmitting}
+                    className="inline-flex justify-center items-center"
+                  >
+                    <Chrome className="w-5 h-5 mr-2" />
+                    Google
+                  </Button>
+                  <Button 
+                    type="button" 
+                    variant="outline"
+                    onClick={() => handleOAuthLogin('apple')}
+                    disabled={isSubmitting}
+                    className="inline-flex justify-center items-center"
+                  >
+                    <AppleIcon className="w-5 h-5 mr-2" />
+                    Apple
+                  </Button>
+                </div>
+              </div>
             </TabsContent>
             
             <TabsContent value="signup">
@@ -190,6 +241,40 @@ const Login = () => {
                   {isSubmitting ? 'Creating account...' : 'Create Account'}
                 </Button>
               </form>
+
+              <div className="mt-6">
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-gray-300"></div>
+                  </div>
+                  <div className="relative flex justify-center text-sm">
+                    <span className="px-2 bg-white text-gray-500">Or sign up with</span>
+                  </div>
+                </div>
+                
+                <div className="mt-6 grid grid-cols-2 gap-3">
+                  <Button 
+                    type="button" 
+                    variant="outline"
+                    onClick={() => handleOAuthLogin('google')}
+                    disabled={isSubmitting}
+                    className="inline-flex justify-center items-center"
+                  >
+                    <Chrome className="w-5 h-5 mr-2" />
+                    Google
+                  </Button>
+                  <Button 
+                    type="button" 
+                    variant="outline"
+                    onClick={() => handleOAuthLogin('apple')}
+                    disabled={isSubmitting}
+                    className="inline-flex justify-center items-center"
+                  >
+                    <AppleIcon className="w-5 h-5 mr-2" />
+                    Apple
+                  </Button>
+                </div>
+              </div>
             </TabsContent>
           </Tabs>
 

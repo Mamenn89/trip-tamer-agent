@@ -11,6 +11,7 @@ import Planner from "./pages/Planner";
 import ViewTrip from "./pages/ViewTrip";
 import AllTrips from "./pages/AllTrips";
 import NotFound from "./pages/NotFound";
+import { Analytics } from "@vercel/analytics/react";
 
 const queryClient = new QueryClient();
 
@@ -52,6 +53,7 @@ const App = () => (
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
+        <Analytics />
       </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>

@@ -1,7 +1,6 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Session, User } from '@supabase/supabase-js';
+import { Session, User, Provider } from '@supabase/supabase-js';
 
 interface AuthContextType {
   currentUser: User | null;
@@ -9,6 +8,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   signup: (email: string, password: string) => Promise<void>;
+  signInWithOAuth: (provider: Provider) => Promise<void>;
   isAuthenticated: boolean;
 }
 
@@ -73,6 +73,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const signInWithOAuth = async (provider: Provider): Promise<void> => {
+    try {
+      setIsLoading(true);
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo: `${window.location.origin}/planner`,
+        },
+      });
+      
+      if (error) throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const logout = async (): Promise<void> => {
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
@@ -84,6 +100,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     login,
     logout,
     signup,
+    signInWithOAuth,
     isAuthenticated: !!currentUser
   };
 
