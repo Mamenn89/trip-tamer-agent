@@ -95,17 +95,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = async (): Promise<void> => {
     try {
       setIsLoading(true);
-      // Check if there's a valid session before attempting to sign out
-      const { data } = await supabase.auth.getSession();
-      if (data.session) {
-        const { error } = await supabase.auth.signOut();
-        if (error) throw error;
-      } else {
-        // If no session exists, just update the local state
+      
+      // First method: Try to sign out directly
+      try {
+        await supabase.auth.signOut();
         setCurrentUser(null);
+        return; // If successful, return early
+      } catch (error: unknown) {
+        // If we get an AuthSessionMissingError, continue to fallback method
+        const err = error as Error;
+        if (err.name === 'AuthSessionMissingError' || err.message?.includes('Auth session missing')) {
+          // Continue to fallback method
+        } else {
+          // For other errors, rethrow to be caught by the outer catch
+          throw error;
+        }
       }
-    } catch (error) {
+
+      // Fallback method: Force reset the auth state locally
+      setCurrentUser(null);
+      
+      // Additional cleanup if needed
+      localStorage.removeItem('supabase.auth.token');
+      sessionStorage.removeItem('supabase.auth.token');
+      
+    } catch (error: unknown) {
       console.error("Error during logout:", error);
+      // Even if there's an error, we should reset the UI state
+      setCurrentUser(null);
     } finally {
       setIsLoading(false);
     }
